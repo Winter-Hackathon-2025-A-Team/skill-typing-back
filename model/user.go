@@ -4,7 +4,7 @@ import "time"
 
 type User struct {
 	ID        int       `json:"id" gorm:"primaryKey;autoIncrement"`   // ID
-	CognitoID string    `json:"cognitoID" gorm:"size:255;uniqueIndex` // AWS CognitoID
+	CognitoID string    `json:"cognitoID" gorm:"size:255;uniqueIndex"` // AWS CognitoID
 	IsAdmin   bool      `json:"is_admin" gorm:"default:false"`        // 管理者かどうか
 	Name      string    `json:"name" gorm:"size:100;not null"`        // ユーザー名
 	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`     // 作成日時
