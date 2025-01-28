@@ -1,7 +1,7 @@
 package model
 
 type Answer struct {
-	ID         int `json:"id" gorm:"PrimaryKey;AutoIncliment"`
+	ID         int `json:"id" gorm:"PrimaryKey;Autoincrement"`
 	QuestionID int `json:"question_id" gorm:"not null"`
 	ChoiceID   int `json:"choice_id" gorm:"not null"`
 
