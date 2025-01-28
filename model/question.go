@@ -19,8 +19,5 @@ type Question struct {
 	User     User     `gorm:"foreignKey:UserID"`     // ユーザーとのリレーション
 	Category Category `gorm:"foreignKey:CategoryID"` // カテゴリとのリレーション
 	Answer   Answer   `gorm:"foreignKey:AnswerID"`   // 正解とのリレーション
-	Choices1 Choice   `gorm:"foreignKey:Choice1ID"`  // 選択肢1とのリレーション
-	Choices2 Choice   `gorm:"foreignKey:Choice2ID"`  // 選択肢2とのリレーション
-	Choices3 Choice   `gorm:"foreignKey:Choice3ID"`  // 選択肢3とのリレーション
-	Choices4 Choice   `gorm:"foreignKey:Choice4ID"`  // 選択肢4とのリレーション
+	Choices  []Choice `gorm:"foreignKey:QuestionID"` // 選択肢とのリレーション
 }
