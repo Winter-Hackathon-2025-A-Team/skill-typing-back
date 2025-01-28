@@ -12,4 +12,5 @@ type Choice struct {
 
 	// リレーション
 	Question Question `gorm:"foreignKey:QuestionID"`
+	Answers  []Answer `gorm:"foreignKey:ChoiceID"` // 答えとのリレーション
 }
