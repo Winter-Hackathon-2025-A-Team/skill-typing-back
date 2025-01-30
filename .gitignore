@@ -1,1 +1,4 @@
 /tmp
+.env
+.vscode
+.DC_Store
