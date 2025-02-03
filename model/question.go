@@ -7,7 +7,6 @@ type Question struct {
 	UserID     uint      `json:"user_id" gorm:"not null;index"`      // UserID（型を `uint` に統一）
 	CategoryID uint      `json:"category_id" gorm:"not null;index"`  // CategoryID
 	Title      string    `json:"title" gorm:"size:255;not null"`     // タイトル
-	AnswerID   uint      `json:"answer_id" gorm:"not null"`          // AnswerID（型を `uint` に統一）
 	Content    string    `json:"content" gorm:"type:text;not null"`  // 問題文
 	Choice1ID  uint      `json:"choice1_id" gorm:"not null"`         // 選択肢1
 	Choice2ID  uint      `json:"choice2_id" gorm:"not null"`         // 選択肢2
@@ -16,8 +15,8 @@ type Question struct {
 	CreatedAt  time.Time `json:"created_at" gorm:"autoCreateTime"`   // 作成日時
 	UpdatedAt  time.Time `json:"updated_at" gorm:"autoUpdateTime"`   // 更新日時
 
-	User     User     `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`     // ユーザーとのリレーション
-	Category Category `gorm:"foreignKey:CategoryID;constraint:OnDelete:CASCADE;"` // カテゴリとのリレーション
-	Answer   Answer   `gorm:"foreignKey:AnswerID;constraint:OnDelete:CASCADE;"`   // 正解とのリレーション
-	Choices  []Choice `gorm:"foreignKey:QuestionID;constraint:OnDelete:CASCADE;"` // 選択肢とのリレーション
+	User     User     `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`                   // ユーザーとのリレーション
+	Category Category `gorm:"foreignKey:CategoryID;constraint:OnDelete:CASCADE;"`               // カテゴリとのリレーション
+	Answer   Answer   `gorm:"foreignKey:QuestionID;references:ID;constraint:OnDelete:CASCADE;"` // 正解とのリレーション
+	Choices  []Choice `gorm:"foreignKey:QuestionID;references:ID;constraint:OnDelete:CASCADE;"` // 選択肢とのリレーション
 }
