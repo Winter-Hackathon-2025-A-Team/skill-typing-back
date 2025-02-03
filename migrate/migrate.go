@@ -26,10 +26,10 @@ func main() {
 	fmt.Println("Starting migration...")
 	err = dbConn.AutoMigrate(
 		&model.User{},
+		&model.Category{},
 		&model.Score{},
 		&model.Question{},
 		&model.Choice{},
-		&model.Category{},
 		&model.Answer{},
 	)
 	if err != nil {
