@@ -1,9 +1,9 @@
 package model
 
 type Category struct {
-	ID    string `json:"id" gorm:"primaryKey;autoIncrement"` // 主キー
-	Title string `json:"title" gorm:"primaryKey"`            // 問題のカテゴリー名
+	ID    uint   `json:"id" gorm:"primaryKey;autoIncrement"` // 主キー
+	Title string `json:"title" gorm:"size:255;not null"`     // カテゴリー名（ユニーク）
 
-	//リレーション
-	Questions []Question `gorm:"foreignKey:CategorieID"` // 質問とのリレーション
+	// リレーション
+	Questions []Question `gorm:"foreignKey:CategoryID;constraint:OnDelete:CASCADE;"` //  外部キーの設定
 }
