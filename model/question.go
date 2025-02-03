@@ -3,9 +3,9 @@ package model
 import "time"
 
 type Question struct {
-	ID         int       `json:"id" gorm:"primaryKey;autoIncrement"` // ID
+	ID         uint      `json:"id" gorm:"primaryKey;autoIncrement"` // ID
 	UserID     int       `json:"user_id" gorm:"not null;index"`      // userID
-	CategoryID int       `json:"category_id" gorm:"not null;index"`  // CategoryID
+	CategoryID uint      `json:"category_id" gorm:"not null;index"`  // CategoryID
 	Title      string    `json:"title" gorm:"size:255;not null"`     // タイトル
 	AnswerID   string    `json:"answer_id" gorm:"not null"`          // answerID
 	Content    string    `json:"content" gorm:"type:text;not null"`  // 問題文
