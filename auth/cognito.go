@@ -79,44 +79,25 @@ func Create(config Config) (CognitoJwtVerifier, error) {
 
 // トークン検証
 func (c CognitoJwtVerifier) Verify(token string) (jwt.Claims, error) {
-	log.Println("Starting token verification...")
-
 	decomposeUnverifiedJwt, err := utils.DecomposeUnverifiedJwt(token)
 	if err != nil {
-		log.Printf("Failed to decompose JWT: %v", err)
 		return nil, err
 	}
 
 	jwk, err := utils.GetJwk(decomposeUnverifiedJwt, c.jwksUri, c.cache)
 	if err != nil {
-		log.Printf("Failed to get JWT: %v", err)
 		return nil, err
 	}
 
 	err = utils.VerifyDecomposedJwt(decomposeUnverifiedJwt, c.issuer, c.tokenUse, jwk.Alg)
 	if err != nil {
-		log.Printf("Failed to verify decomposed JWT: %v", err)
 		return nil, err
 	}
-
-	// validToken, err := utils.ValidateJwt(token, jwk)
-	// if err != nil {
-	// 	log.Printf("Failed to validate JWT: %v", err)
-	// 	return nil, err
-	// }
-
-	// log.Printf("Claims type after validation: %T", validToken.Claims)
-	// log.Printf("Claims content: %+v", validToken.Claims)
-
-	// return validToken.Claims, nil
 
 	validToken, err := utils.ValidateJwt(token, jwk)
 	if err != nil {
-		log.Printf("Failed to validate JWT: %v", err)
 		return nil, err
 	}
-	log.Printf("Claims type after validation: %T", validToken.Claims)
-	log.Printf("Claims content: %+v", validToken.Claims)
 
 	return validToken.Claims, nil
 }
@@ -134,22 +115,14 @@ func (a *CognitoAuth) AuthMiddleware() echo.MiddlewareFunc {
 			// "Bearer"を除去
 			token := auth[7:]
 
-			// デバッグ用: トークンの内容を確認
-			log.Printf("received token: %s", token)
-
 			// トークンを検証
 			claims, err := a.verifier.Verify(token)
 			if err != nil {
-				log.Printf("Token verification failed: %v", err)
 				return echo.ErrUnauthorized
 			}
 
-			log.Printf("Claims type before cast: %T", claims)
-			log.Printf("Claims content before cast: %+v", claims)
-
 			mapClaims, ok := claims.(jwt.MapClaims)
 			if !ok {
-				log.Printf("Failed to cast to MapClaims")
 				return echo.ErrInternalServerError
 			}
 
@@ -159,6 +132,8 @@ func (a *CognitoAuth) AuthMiddleware() echo.MiddlewareFunc {
 				TokenUse: mapClaims["token_use"].(string),
 				Username: mapClaims["username"].(string),
 			}
+
+			log.Printf("Authentication successful - User: %s", cognitoClaims.Username)
 
 			// コンテキストにユーザー情報を保存
 			c.Set("user", cognitoClaims)
