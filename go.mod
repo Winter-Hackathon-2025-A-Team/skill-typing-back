@@ -1,4 +1,4 @@
-module skill-typing
+module skill-typing-back
 
 go 1.23.5
 
