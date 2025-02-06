@@ -2,3 +2,4 @@
 .env
 .vscode
 .DC_Store
+phpmyadmin/sessions/

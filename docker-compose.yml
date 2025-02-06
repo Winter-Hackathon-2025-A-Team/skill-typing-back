@@ -53,7 +53,7 @@ services:
       - dev-mysql
     environment:
       PMA_HOST: dev-mysql
-      PMA_PORT: 3308
+      PMA_PORT: 3306
     env_file:
       - .env
     ports:
