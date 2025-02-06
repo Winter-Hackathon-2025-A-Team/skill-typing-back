@@ -3,6 +3,8 @@ module skill-typing-back
 go 1.23.5
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/jhosan7/cognito-jwt-verify v0.3.1
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.13.3
 	gorm.io/driver/mysql v1.5.7
@@ -23,4 +25,5 @@ require (
 	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/time v0.8.0 // indirect
 )
