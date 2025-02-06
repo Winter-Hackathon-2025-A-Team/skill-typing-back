@@ -3,6 +3,7 @@ module skill-typing-back
 go 1.23.5
 
 require (
+	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.49.4
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/jhosan7/cognito-jwt-verify v0.3.1
 	github.com/joho/godotenv v1.5.1
@@ -13,6 +14,10 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.36.1 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.32 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.32 // indirect
+	github.com/aws/smithy-go v1.22.2 // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect

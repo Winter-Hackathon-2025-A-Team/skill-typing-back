@@ -2,14 +2,29 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jhosan7/cognito-jwt-verify/utils"
 	"github.com/labstack/echo/v4"
 )
+
+// Cognito API クライアントを保持する構造体
+type CognitoUserService struct {
+	client *cognitoidentityprovider.Client
+}
+
+// ユーザー情報取得メソッド
+func (s *CognitoUserService) GetUserInfo(ctx context.Context, accessToken string) (*cognitoidentityprovider.GetUserOutput, error) {
+	input := &cognitoidentityprovider.GetUserInput{
+		AccessToken: &accessToken,
+	}
+	return s.client.GetUser(ctx, input)
+}
 
 // Cognitoの設定やクレームを扱う構造体
 type CognitoAuth struct {
@@ -43,6 +58,13 @@ type Config struct {
 	UserPoolId string
 	TokenUse string
 	ClientId string
+}
+
+func NewCognitoUserService() (*CognitoUserService, error) {
+	// 一時的な実装としてからのクライアントを返す
+	return &CognitoUserService{
+		client: &cognitoidentityprovider.Client{},
+	}, nil 
 }
 
 // 新しいCognitoAuth インスタンス作成
@@ -103,7 +125,7 @@ func (c CognitoJwtVerifier) Verify(token string) (jwt.Claims, error) {
 }
 
 // 認証ミドルウェア
-func (a *CognitoAuth) AuthMiddleware() echo.MiddlewareFunc {
+func (a *CognitoAuth) AuthMiddleware(cognitoService *CognitoUserService) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			// Authorizationヘッダーからトークンを取得
@@ -131,6 +153,19 @@ func (a *CognitoAuth) AuthMiddleware() echo.MiddlewareFunc {
 				Sub: mapClaims["sub"].(string),
 				TokenUse: mapClaims["token_use"].(string),
 				Username: mapClaims["username"].(string),
+			}
+
+			// Cognitoからユーザー情報を取得してログ出力
+			userInfo, err := cognitoService.GetUserInfo(c.Request().Context(), token)
+			if err != nil {
+				log.Printf("Failed to get user info from Cognito: %v", err)
+			} else {
+				log.Printf("Cognito User Attributes:")
+				for _, attr :=range userInfo.UserAttributes {
+					if attr.Name != nil && attr.Value != nil {
+						log.Printf(" %s: %s", *attr.Name, *attr.Value)
+					}
+				}
 			}
 
 			log.Printf("Authentication successful - User: %s", cognitoClaims.Username)

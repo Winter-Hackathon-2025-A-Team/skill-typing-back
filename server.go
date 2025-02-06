@@ -41,13 +41,19 @@ func main() {
 		e.Logger.Fatal(err)
 	}
 
+	// Cognitoのユーザーサービスの初期化
+	cognitoService, err := auth.NewCognitoUserService()
+	if err != nil {
+		e.Logger.Fatal(err)
+	}
+
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
 
 	// 認証が必要なルートグループ
 	api := e.Group("/api")
-	api.Use(cognitoAuth.AuthMiddleware())
+	api.Use(cognitoAuth.AuthMiddleware(cognitoService))
 
 	
 	api.GET("/auth", func(c echo.Context) error {
