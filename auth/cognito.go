@@ -7,6 +7,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/99designs/gqlgen/codegen/config"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jhosan7/cognito-jwt-verify/utils"
@@ -61,10 +63,19 @@ type Config struct {
 }
 
 func NewCognitoUserService() (*CognitoUserService, error) {
-	// 一時的な実装としてからのクライアントを返す
+	// SDkの設定を初期化
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion(os.Getenv("AWS_REGION")), 
+	)
+	if err != nil {
+		return nil, fmt.Errorf("unable to load SDK config: %v", err)
+	}
+	// Cognitoクライアントを作成
+	client := cognitoidentityprovider.NewFromConfig(cfg)
+
 	return &CognitoUserService{
-		client: &cognitoidentityprovider.Client{},
-	}, nil 
+		client: client,
+	}, nil
 }
 
 // 新しいCognitoAuth インスタンス作成
@@ -152,7 +163,6 @@ func (a *CognitoAuth) AuthMiddleware(cognitoService *CognitoUserService) echo.Mi
 			cognitoClaims := &CognitoClaims{
 				Sub: mapClaims["sub"].(string),
 				TokenUse: mapClaims["token_use"].(string),
-				Username: mapClaims["username"].(string),
 			}
 
 			// Cognitoからユーザー情報を取得してログ出力
