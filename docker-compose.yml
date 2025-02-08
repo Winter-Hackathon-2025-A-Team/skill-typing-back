@@ -9,3 +9,70 @@ services:
     ports:
       - '1323:1323'
     tty: true
+    depends_on:
+      - dev-mysql
+
+  dev-mysql:
+    image: mysql:8.0
+    ports:
+      - '3308:3306'
+    # コンテナ名をmysqlに設定
+    container_name: dev-mysql
+    # M1チップでも動くように
+    # Intel Macの場合あってもなくても動く
+    platform: linux/x86_64
+    # DBのボリュームを指定
+    # ローカルの/data/dbをコンテナの/var/lib/mysqlにマウントする
+    # volumes:
+    #   - mysql_data:/var/lib/mysql
+    # コンテナ内の環境変数を設定
+    env_file:
+      - .env
+    networks:
+      - app-network
+    # DBのコンテナのヘルスチェックを行う
+    # mysqladmin(MySQLサーバーの管理を行うクライアントを使ってDBコンテナ自身(127.0.0.1)にpingを送ってヘルスチェックを行う
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD
+      # ヘルスチェックのインターバルは10秒
+      interval: 10s
+      # タイムアウト時間は10秒
+      timeout: 10s
+      # リトライ回数は3回
+      retries: 3
+      # ヘルスチェックが失敗しても無視する時間は30秒
+      start_period: 30s
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    # コンテナ内の環境変数を.envを使って設定
+    depends_on:
+      - dev-mysql
+    environment:
+      PMA_HOST: dev-mysql
+      PMA_PORT: 3306
+    env_file:
+      - .env
+    ports:
+      - '4000:80'
+    networks:
+      - app-network
+    volumes:
+      - ./phpmyadmin/sessions:/sessions
+
+volumes:
+  mysql-data:
+    driver: local
+  tmp-data:
+    driver: local
+  static_volume:
+    driver: local
+  media_volume:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
