@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/99designs/gqlgen/codegen/config"
+	// "github.com/99designs/gqlgen/codegen/config"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/golang-jwt/jwt/v5"
