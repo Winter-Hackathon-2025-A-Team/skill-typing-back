@@ -10,6 +10,8 @@ import (
 	"gorm.io/gorm"
 )
 
+var DB *gorm.DB // グローバルな DB 変数
+
 func NewDB() *gorm.DB {
 	if os.Getenv("GO_ENV") == "dev" {
 		err := godotenv.Load()
@@ -29,4 +31,9 @@ func NewDB() *gorm.DB {
 	}
 	fmt.Println("Connected")
 	return db
+}
+
+// `handlers/question.go` や `handlers/quiz.go` から DB を取得する関数
+func GetDB() *gorm.DB {
+	return DB
 }
