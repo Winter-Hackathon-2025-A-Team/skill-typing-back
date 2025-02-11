@@ -12,6 +12,8 @@ require (
 	github.com/labstack/echo/v4 v4.13.3
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/gorm v1.25.12
+	github.com/sashabaranov/go-openai v1.37.0
+
 )
 
 require (
