@@ -14,3 +14,8 @@ $ make dev
 ```
 $ make down 
 ```
+
+db/db.goを変更したとき
+```
+GO_ENV=dev go run migrate/migrate.go
+```
