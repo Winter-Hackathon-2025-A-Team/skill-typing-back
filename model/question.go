@@ -4,7 +4,7 @@ import "time"
 
 type Question struct {
 	ID         uint      `json:"id" gorm:"primaryKey;autoIncrement"` // ID
-	UserID     uint      `json:"user_id" gorm:"not null;index"`      // UserID（型を `uint` に統一）
+	UserID     string    `json:"user_id" gorm:"not null;index"`      // UserID（型を `uint` に統一）
 	CategoryID uint      `json:"category_id" gorm:"not null;index"`  // CategoryID
 	Title      string    `json:"title" gorm:"size:255;not null"`     // タイトル
 	Content    string    `json:"content" gorm:"type:text;not null"`  // 問題文

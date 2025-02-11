@@ -3,7 +3,7 @@ package model
 import "time"
 
 type User struct {
-	ID        uint      `json:"id" gorm:"primaryKey;autoIncrement"` // ID
+	ID        string    `json:"id" gorm:"primaryKey;autoIncrement"` // ID
 	CognitoID string    `json:"cognitoID" gorm:"size:255;unique"`   // AWS CognitoID（修正）
 	IsAdmin   bool      `json:"is_admin" gorm:"default:false"`      // 管理者かどうか
 	Name      string    `json:"name" gorm:"size:100;not null"`      // ユーザー名

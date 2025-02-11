@@ -9,13 +9,15 @@ services:
     ports:
       - '1323:1323'
     tty: true
+    networks:
+      - app-network
     depends_on:
       - dev-mysql
 
   dev-mysql:
     image: mysql:8.0
     ports:
-      - '3308:3306'
+      - '3306:3306'
     # コンテナ名をmysqlに設定
     container_name: dev-mysql
     # M1チップでも動くように
