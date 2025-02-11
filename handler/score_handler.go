@@ -13,8 +13,8 @@ import (
 func CreateScore(c echo.Context) error {
 
 	// リクエストボディを取得
-	q := new(model.Score)
-	if err := c.Bind(q); err != nil {
+	s := new(model.Score)
+	if err := c.Bind(s); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
 	}
 
@@ -23,7 +23,7 @@ func CreateScore(c echo.Context) error {
 	sub := user.Sub
 
 	// scoreユーザーIDを設定
-	score := *q
+	score := *s
 	score.UserID = sub
 
 	// DB 接続
