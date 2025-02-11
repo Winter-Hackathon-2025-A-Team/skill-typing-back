@@ -15,7 +15,12 @@ $ make dev
 $ make down 
 ```
 
-ローカル環境：ターミナルやコマンドプロンプトでのコマンド操作が必要です。
+db/db.goを変更したとき
+```
+$ GO_ENV=dev go run migrate/migrate.go
+```
+
+dockerコンテナを削除した場合、ターミナルやコマンドプロンプトでのコマンド操作が必要です。
 ```
 ❯ docker exec -it dev-mysql mysql -u root -p
 ```           
@@ -34,7 +39,3 @@ FLUSH PRIVILEGES;
 ```  
 EXIT
 ```  
-db/db.goを変更したとき
-```
-$ GO_ENV=dev go run migrate/migrate.go
-```
