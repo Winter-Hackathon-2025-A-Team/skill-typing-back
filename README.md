@@ -22,7 +22,7 @@ $ GO_ENV=dev go run migrate/migrate.go
 
 dockerコンテナを削除した場合、ターミナルやコマンドプロンプトでのコマンド操作が必要です。
 ```
-❯ docker exec -it dev-mysql mysql -u root -p
+$ docker exec -it dev-mysql mysql -u root -p
 ```           
 でdockerのmysqlに接続
 
