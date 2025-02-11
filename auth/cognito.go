@@ -178,7 +178,7 @@ func (a *CognitoAuth) AuthMiddleware(cognitoService *CognitoUserService) echo.Mi
 				}
 			}
 
-			log.Printf("Authentication successful - User: %s", cognitoClaims.Username)
+			log.Printf("Authentication successful - UserSub: %s", cognitoClaims.Sub)
 
 			// コンテキストにユーザー情報を保存
 			c.Set("user", cognitoClaims)
