@@ -1,4 +1,4 @@
-package handler
+package repository
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"skill-typing-back/model"
 )
 
-//DBにユーザーが存在するか確認し存在すればuserを返す
+// DBにユーザーが存在するか確認し存在すればuserを返す
 func GetUser(id string) (*model.User, error) {
 
 	dbConn := db.NewDB()
@@ -32,8 +32,8 @@ func CreateUser(id string, name string, isAdmin bool) (*model.User, error) {
 	}
 
 	newUser := model.User{
-		ID: id,
-		Name: name,
+		ID:      id,
+		Name:    name,
 		IsAdmin: isAdmin,
 	}
 

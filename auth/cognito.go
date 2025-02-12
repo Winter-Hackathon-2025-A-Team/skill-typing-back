@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"skill-typing-back/handler"
+	"skill-typing-back/repository"
 
 	// "github.com/99designs/gqlgen/codegen/config"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -38,36 +38,36 @@ type CognitoAuth struct {
 // JWTクレームの構造体
 type CognitoClaims struct {
 	jwt.RegisteredClaims
-	Sub string `json:"sub"`
-	Iss string `json:"iss"`
-	Version int `json:"version"`
-	ClientID string `json:"client_id"`
+	Sub       string `json:"sub"`
+	Iss       string `json:"iss"`
+	Version   int    `json:"version"`
+	ClientID  string `json:"client_id"`
 	OriginJti string `json:"origin_jti"`
-	EventID string `json:"event_id"`
-	TokenUse string `json:"token_use"` // トークンタイプ（"access" of "id"）
-	Scope string `json:"scope"`
-	AuthTime int64 `json:"auth_time"`
-	Username string `json:"username"`
+	EventID   string `json:"event_id"`
+	TokenUse  string `json:"token_use"` // トークンタイプ（"access" of "id"）
+	Scope     string `json:"scope"`
+	AuthTime  int64  `json:"auth_time"`
+	Username  string `json:"username"`
 }
 
 // CognitoJwtVerifierの構造体
 type CognitoJwtVerifier struct {
-	issuer string
-	jwksUri string
+	issuer   string
+	jwksUri  string
 	tokenUse string
-	cache *utils.Cache
+	cache    *utils.Cache
 }
 
 type Config struct {
 	UserPoolId string
-	TokenUse string
-	ClientId string
+	TokenUse   string
+	ClientId   string
 }
 
 func NewCognitoUserService() (*CognitoUserService, error) {
 	// SDkの設定を初期化
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion(os.Getenv("AWS_REGION")), 
+		config.WithRegion(os.Getenv("AWS_REGION")),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("unable to load SDK config: %v", err)
@@ -84,8 +84,8 @@ func NewCognitoUserService() (*CognitoUserService, error) {
 func NewCognitoAuth() (*CognitoAuth, error) {
 	config := Config{
 		UserPoolId: os.Getenv("COGNITO_USER_POOL_ID"),
-		TokenUse: "access",
-		ClientId: os.Getenv("COGNITO_CLIENT_ID"),
+		TokenUse:   "access",
+		ClientId:   os.Getenv("COGNITO_CLIENT_ID"),
 	}
 
 	verifier, err := Create(config)
@@ -105,10 +105,10 @@ func Create(config Config) (CognitoJwtVerifier, error) {
 		return CognitoJwtVerifier{}, err
 	}
 	return CognitoJwtVerifier{
-		issuer: issuer,
-		jwksUri: jwksUri,
+		issuer:   issuer,
+		jwksUri:  jwksUri,
 		tokenUse: config.TokenUse,
-		cache: utils.NewCache(),
+		cache:    utils.NewCache(),
 	}, nil
 }
 
@@ -163,14 +163,14 @@ func (a *CognitoAuth) AuthMiddleware(cognitoService *CognitoUserService) echo.Mi
 
 			// クレームをCognitoClaimsにマッピング
 			cognitoClaims := &CognitoClaims{
-				Sub: mapClaims["sub"].(string),
+				Sub:      mapClaims["sub"].(string),
 				TokenUse: mapClaims["token_use"].(string),
 			}
 
 			sub := cognitoClaims.Sub
 
 			// DBでユーザーを検索
-			user, err := handler.GetUser(sub)
+			user, err := repository.GetUser(sub)
 			if err != nil {
 				if err == gorm.ErrRecordNotFound {
 					// トークンからユーザー情報を取得
@@ -190,7 +190,7 @@ func (a *CognitoAuth) AuthMiddleware(cognitoService *CognitoUserService) echo.Mi
 						}
 					}
 					// 新規ユーザーを作成
-					user, err = handler.CreateUser(sub, userName, isAdmin)
+					user, err = repository.CreateUser(sub, userName, isAdmin)
 					if err != nil {
 						log.Printf("Failed to create user: %v", err)
 						return echo.ErrInternalServerError
