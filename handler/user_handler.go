@@ -1,28 +1,44 @@
 package handler
 
 import (
-	"gorm.io/gorm"
+	"fmt"
 
+	"skill-typing-back/db"
 	"skill-typing-back/model"
 )
 
-type UserHandler struct {
-	db *gorm.DB
-}
+//DBにユーザーが存在するか確認し存在すればuserを返す
+func GetUser(id string) (*model.User, error) {
 
-func NewUserHandler(db *gorm.DB) *UserHandler {
-	return &UserHandler{db: db}
-}
+	dbConn := db.NewDB()
+	if dbConn == nil {
+		return nil, fmt.Errorf("Failed to connect to database")
+	}
 
-func (h *UserHandler) FindByID(ID string) (*model.User, error) {
 	var user model.User
-	err := h.db.Where("ID = ?", ID).First(&user).Error
-	if err != nil {
-		return nil, err
+	result := dbConn.Where("ID = ?", id).First(&user)
+	if result.Error != nil {
+		return nil, result.Error
 	}
 	return &user, nil
 }
 
-func (h *UserHandler) Create(user *model.User) error {
-	return h.db.Create(user).Error
+// 新規ユーザー登録
+func CreateUser(id string, name string) (*model.User, error) {
+
+	dbConn := db.NewDB()
+	if dbConn == nil {
+		return nil, fmt.Errorf("failed to connect to database")
+	}
+
+	newUser := model.User{
+		ID: id,
+		Name: name,
+	}
+
+	if err := dbConn.Create(&newUser).Error; err != nil {
+		return nil, fmt.Errorf("failed to create user: %w", err)
+	}
+
+	return &newUser, nil
 }
