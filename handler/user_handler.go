@@ -24,7 +24,7 @@ func GetUser(id string) (*model.User, error) {
 }
 
 // 新規ユーザー登録
-func CreateUser(id string, name string) (*model.User, error) {
+func CreateUser(id string, name string, isAdmin bool) (*model.User, error) {
 
 	dbConn := db.NewDB()
 	if dbConn == nil {
@@ -34,6 +34,7 @@ func CreateUser(id string, name string) (*model.User, error) {
 	newUser := model.User{
 		ID: id,
 		Name: name,
+		IsAdmin: isAdmin,
 	}
 
 	if err := dbConn.Create(&newUser).Error; err != nil {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"skill-typing-back/handler"
 
 	// "github.com/99designs/gqlgen/codegen/config"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -13,6 +14,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jhosan7/cognito-jwt-verify/utils"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 // Cognito API クライアントを保持する構造体
@@ -165,23 +167,56 @@ func (a *CognitoAuth) AuthMiddleware(cognitoService *CognitoUserService) echo.Mi
 				TokenUse: mapClaims["token_use"].(string),
 			}
 
-			// Cognitoからユーザー情報を取得してログ出力
-			userInfo, err := cognitoService.GetUserInfo(c.Request().Context(), token)
+			sub := cognitoClaims.Sub
+
+			// DBでユーザーを検索
+			user, err := handler.GetUser(sub)
 			if err != nil {
-				log.Printf("Failed to get user info from Cognito: %v", err)
-			} else {
-				log.Printf("Cognito User Attributes:")
-				for _, attr :=range userInfo.UserAttributes {
-					if attr.Name != nil && attr.Value != nil {
-						log.Printf(" %s: %s", *attr.Name, *attr.Value)
+				if err == gorm.ErrRecordNotFound {
+					// トークンからユーザー情報を取得
+					userInfo, err := cognitoService.GetUserInfo(c.Request().Context(), token)
+					if err != nil {
+						log.Printf("Failed to get user info from Cognito: %v", err)
+						return echo.ErrInternalServerError
 					}
+					var userName string
+					var isAdmin bool
+					for _, attr := range userInfo.UserAttributes {
+						switch *attr.Name {
+						case "name":
+							userName = *attr.Value
+						case "custom:isAdmin":
+							isAdmin = *attr.Value == "true"
+						}
+					}
+					// 新規ユーザーを作成
+					user, err = handler.CreateUser(sub, userName, isAdmin)
+					if err != nil {
+						log.Printf("Failed to create user: %v", err)
+						return echo.ErrInternalServerError
+					}
+				} else {
+					log.Printf("Failed to get user: $v", err)
+					return echo.ErrInternalServerError
 				}
 			}
+			// Cognitoからユーザー情報を取得してログ出力
+			// userInfo, err := cognitoService.GetUserInfo(c.Request().Context(), token)
+			// if err != nil {
+			// 	log.Printf("Failed to get user info from Cognito: %v", err)
+			// } else {
+			// 	log.Printf("Cognito User Attributes:")
+			// 	for _, attr :=range userInfo.UserAttributes {
+			// 		if attr.Name != nil && attr.Value != nil {
+			// 			log.Printf(" %s: %s", *attr.Name, *attr.Value)
+			// 		}
+			// 	}
+			// }
 
-			log.Printf("Authentication successful - UserSub: %s", cognitoClaims.Sub)
+			// log.Printf("Authentication successful - UserSub: %s", cognitoClaims.Sub)
 
-			// コンテキストにユーザー情報を保存
 			c.Set("user", cognitoClaims)
+			c.Set("dbUser", user)
 
 			return next(c)
 		}
