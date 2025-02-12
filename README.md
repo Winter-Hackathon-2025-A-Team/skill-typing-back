@@ -15,10 +15,6 @@ $ make dev
 $ make down 
 ```
 
-db/db.goを変更したとき
-```
-$ GO_ENV=dev go run migrate/migrate.go
-```
 
 dockerコンテナを削除した場合、ターミナルやコマンドプロンプトでのコマンド操作が必要です。
 ```
@@ -38,4 +34,9 @@ FLUSH PRIVILEGES;
 
 ```  
 EXIT
-```  
+```
+
+db/db.goを変更したとき
+```
+$ GO_ENV=dev go run migrate/migrate.go
+```

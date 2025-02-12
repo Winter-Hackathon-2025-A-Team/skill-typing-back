@@ -26,6 +26,12 @@ func SetupRouter() *echo.Echo {
 		e.Logger.Fatal(err)
 	}
 
+	// Cognitoのユーザーサービスの初期化
+	cognitoService, err := auth.NewCognitoUserService()
+	if err != nil {
+		e.Logger.Fatal(err)
+	}
+
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
@@ -37,7 +43,7 @@ func SetupRouter() *echo.Echo {
 	// ルーティング
 	api := e.Group("/api")
 
-	api.Use(cognitoAuth.AuthMiddleware())
+	api.Use(cognitoAuth.AuthMiddleware(cognitoService))
 
 	api.GET("/auth", func(c echo.Context) error {
 		user := c.Get("user").(*auth.CognitoClaims)
