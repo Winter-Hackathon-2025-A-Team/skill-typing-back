@@ -51,6 +51,9 @@ func SetupRouter() *echo.Echo {
 			"sub": user.Sub,
 		})
 	})
+	// ユーザー情報取得エンドポイント
+	api.GET("/user/me", handler.GetMe)
+
 	// 質問の作成エンドポイント
 	api.POST("/questions", handler.CreateQuestion)
 
