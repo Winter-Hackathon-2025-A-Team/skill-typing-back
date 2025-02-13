@@ -54,5 +54,8 @@ func SetupRouter() *echo.Echo {
 	// 質問の作成エンドポイント
 	api.POST("/questions", handler.CreateQuestion)
 
+	// 質問の作成エンドポイント
+	api.POST("/scores", handler.CreateScore)
+
 	return e
 }
