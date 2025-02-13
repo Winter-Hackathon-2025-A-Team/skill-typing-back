@@ -2,14 +2,33 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
+	"skill-typing-back/handler"
 
+	// "github.com/99designs/gqlgen/codegen/config"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jhosan7/cognito-jwt-verify/utils"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
+
+// Cognito API クライアントを保持する構造体
+type CognitoUserService struct {
+	client *cognitoidentityprovider.Client
+}
+
+// ユーザー情報取得メソッド
+func (s *CognitoUserService) GetUserInfo(ctx context.Context, accessToken string) (*cognitoidentityprovider.GetUserOutput, error) {
+	input := &cognitoidentityprovider.GetUserInput{
+		AccessToken: &accessToken,
+	}
+	return s.client.GetUser(ctx, input)
+}
 
 // Cognitoの設定やクレームを扱う構造体
 type CognitoAuth struct {
@@ -43,6 +62,22 @@ type Config struct {
 	UserPoolId string
 	TokenUse string
 	ClientId string
+}
+
+func NewCognitoUserService() (*CognitoUserService, error) {
+	// SDkの設定を初期化
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion(os.Getenv("AWS_REGION")), 
+	)
+	if err != nil {
+		return nil, fmt.Errorf("unable to load SDK config: %v", err)
+	}
+	// Cognitoクライアントを作成
+	client := cognitoidentityprovider.NewFromConfig(cfg)
+
+	return &CognitoUserService{
+		client: client,
+	}, nil
 }
 
 // 新しいCognitoAuth インスタンス作成
@@ -103,7 +138,7 @@ func (c CognitoJwtVerifier) Verify(token string) (jwt.Claims, error) {
 }
 
 // 認証ミドルウェア
-func (a *CognitoAuth) AuthMiddleware() echo.MiddlewareFunc {
+func (a *CognitoAuth) AuthMiddleware(cognitoService *CognitoUserService) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			// Authorizationヘッダーからトークンを取得
@@ -130,13 +165,58 @@ func (a *CognitoAuth) AuthMiddleware() echo.MiddlewareFunc {
 			cognitoClaims := &CognitoClaims{
 				Sub: mapClaims["sub"].(string),
 				TokenUse: mapClaims["token_use"].(string),
-				Username: mapClaims["username"].(string),
 			}
 
-			log.Printf("Authentication successful - User: %s", cognitoClaims.Username)
+			sub := cognitoClaims.Sub
 
-			// コンテキストにユーザー情報を保存
+			// DBでユーザーを検索
+			user, err := handler.GetUser(sub)
+			if err != nil {
+				if err == gorm.ErrRecordNotFound {
+					// トークンからユーザー情報を取得
+					userInfo, err := cognitoService.GetUserInfo(c.Request().Context(), token)
+					if err != nil {
+						log.Printf("Failed to get user info from Cognito: %v", err)
+						return echo.ErrInternalServerError
+					}
+					var userName string
+					var isAdmin bool
+					for _, attr := range userInfo.UserAttributes {
+						switch *attr.Name {
+						case "name":
+							userName = *attr.Value
+						case "custom:isAdmin":
+							isAdmin = *attr.Value == "true"
+						}
+					}
+					// 新規ユーザーを作成
+					user, err = handler.CreateUser(sub, userName, isAdmin)
+					if err != nil {
+						log.Printf("Failed to create user: %v", err)
+						return echo.ErrInternalServerError
+					}
+				} else {
+					log.Printf("Failed to get user: $v", err)
+					return echo.ErrInternalServerError
+				}
+			}
+			// Cognitoからユーザー情報を取得してログ出力
+			// userInfo, err := cognitoService.GetUserInfo(c.Request().Context(), token)
+			// if err != nil {
+			// 	log.Printf("Failed to get user info from Cognito: %v", err)
+			// } else {
+			// 	log.Printf("Cognito User Attributes:")
+			// 	for _, attr :=range userInfo.UserAttributes {
+			// 		if attr.Name != nil && attr.Value != nil {
+			// 			log.Printf(" %s: %s", *attr.Name, *attr.Value)
+			// 		}
+			// 	}
+			// }
+
+			// log.Printf("Authentication successful - UserSub: %s", cognitoClaims.Sub)
+
 			c.Set("user", cognitoClaims)
+			c.Set("dbUser", user)
 
 			return next(c)
 		}
