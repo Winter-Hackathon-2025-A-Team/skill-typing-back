@@ -3,15 +3,39 @@ package router
 import (
 	"net/http"
 	"skill-typing-back/auth"
+	"skill-typing-back/db"
 	"skill-typing-back/handler"
+	"skill-typing-back/repository"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
 func SetupRouter() *echo.Echo {
+
 	e := echo.New()
 
+	// DBコネクション作成
+	db := db.NewDB()
+	// DBリポジトリ初期化
+	repo := repository.New(db)
+	// APIハンドラ構造体初期化
+	apiHandler := handler.New(repo)
+
+	// Cognitoの認証設定
+	cognitoAuth, err := auth.NewCognitoAuth(repo)
+	if err != nil {
+		e.Logger.Fatal(err)
+	}
+	// Cognitoのユーザーサービスの初期化
+	cognitoService, err := auth.NewCognitoUserService()
+	if err != nil {
+		e.Logger.Fatal(err)
+	}
+
+	// Middleware
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 	// CORSミドルウェアの設定
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"http://localhost:5173"},
@@ -20,29 +44,20 @@ func SetupRouter() *echo.Echo {
 		AllowCredentials: true,
 	}))
 
-	// Cognitoの認証設定
-	cognitoAuth, err := auth.NewCognitoAuth()
-	if err != nil {
-		e.Logger.Fatal(err)
-	}
-
-	// Cognitoのユーザーサービスの初期化
-	cognitoService, err := auth.NewCognitoUserService()
-	if err != nil {
-		e.Logger.Fatal(err)
-	}
-
+	/*
+	* ルーティング(cognito認証なし)
+	 */
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
 
-	// Middleware
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
+	/*
+	* ルーティング(cognito認証あり)
+	 */
 
-	// ルーティング
 	api := e.Group("/api")
 
+	// api配下にのみcorsMiddlwareを適用
 	api.Use(cognitoAuth.AuthMiddleware(cognitoService))
 
 	api.GET("/auth", func(c echo.Context) error {
@@ -52,13 +67,11 @@ func SetupRouter() *echo.Echo {
 		})
 	})
 	// ユーザー情報取得エンドポイント
-	api.GET("/user/me", handler.GetMe)
-
+	api.GET("/user/me", apiHandler.GetMe)
 	// 質問の作成エンドポイント
-	api.POST("/questions", handler.CreateQuestion)
-
+	api.POST("/questions", apiHandler.CreateQuestion)
 	// 質問の作成エンドポイント
-	api.POST("/scores", handler.CreateScore)
+	api.POST("/scores", apiHandler.CreateScore)
 
 	return e
 }

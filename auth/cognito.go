@@ -33,6 +33,7 @@ func (s *CognitoUserService) GetUserInfo(ctx context.Context, accessToken string
 // Cognitoの設定やクレームを扱う構造体
 type CognitoAuth struct {
 	verifier CognitoJwtVerifier
+	repo     *repository.DbRepository
 }
 
 // JWTクレームの構造体
@@ -81,7 +82,7 @@ func NewCognitoUserService() (*CognitoUserService, error) {
 }
 
 // 新しいCognitoAuth インスタンス作成
-func NewCognitoAuth() (*CognitoAuth, error) {
+func NewCognitoAuth(repo *repository.DbRepository) (*CognitoAuth, error) {
 	config := Config{
 		UserPoolId: os.Getenv("COGNITO_USER_POOL_ID"),
 		TokenUse:   "access",
@@ -95,6 +96,7 @@ func NewCognitoAuth() (*CognitoAuth, error) {
 
 	return &CognitoAuth{
 		verifier: verifier,
+		repo:     repo,
 	}, nil
 }
 
@@ -170,7 +172,7 @@ func (a *CognitoAuth) AuthMiddleware(cognitoService *CognitoUserService) echo.Mi
 			sub := cognitoClaims.Sub
 
 			// DBでユーザーを検索
-			user, err := repository.GetUser(sub)
+			user, err := a.repo.GetUser(sub)
 			if err != nil {
 				if err == gorm.ErrRecordNotFound {
 					// トークンからユーザー情報を取得
@@ -190,7 +192,7 @@ func (a *CognitoAuth) AuthMiddleware(cognitoService *CognitoUserService) echo.Mi
 						}
 					}
 					// 新規ユーザーを作成
-					user, err = repository.CreateUser(sub, userName, isAdmin)
+					user, err = a.repo.CreateUser(sub, userName, isAdmin)
 					if err != nil {
 						log.Printf("Failed to create user: %v", err)
 						return echo.ErrInternalServerError

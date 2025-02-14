@@ -1,16 +1,16 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 	"skill-typing-back/auth"
-	"skill-typing-back/db"
 	"skill-typing-back/model"
 
 	"github.com/labstack/echo/v4"
 )
 
 // 問題の新規作成
-func CreateScore(c echo.Context) error {
+func (h *ApiHandler) CreateScore(c echo.Context) error {
 
 	// リクエストボディを取得
 	s := new(model.Score)
@@ -26,15 +26,10 @@ func CreateScore(c echo.Context) error {
 	score := *s
 	score.UserID = sub
 
-	// DB 接続
-	dbConn := db.NewDB()
-	if dbConn == nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to connect to database"})
-	}
-
 	//データの保存
-	if err := dbConn.Create(&score).Error; err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to create score"})
+	if err := h.repo.CreateScore(c, &score); err != nil {
+		log.Printf("ERROR: failed to imprement CreateScore: %v", err.Error())
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
 	// 成功した場合のメッセージ
