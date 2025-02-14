@@ -16,6 +16,9 @@ services:
 
   dev-mysql:
     image: mysql:8.0
+    build:
+      context: ./mysql
+      dockerfile: Dockerfile
     ports:
       - '3306:3306'
     # コンテナ名をmysqlに設定
