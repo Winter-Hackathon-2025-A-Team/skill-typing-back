@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"skill-typing-back/auth"
 	"skill-typing-back/db"
 	"skill-typing-back/model"
 	"strings"
@@ -35,7 +36,7 @@ func GenerateQuizHandler(c echo.Context) error {
 	}
 
 	// DBインスタンスを取得
-	dbConn := db.GetDB()
+	dbConn := db.NewDB()
 	if dbConn == nil {
 		log.Println("データベース接続が確立されていません")
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "データベース接続エラー"})
@@ -72,9 +73,19 @@ func GenerateQuizHandler(c echo.Context) error {
 - 問題文
 - 4つの選択肢
 - 各選択肢の解説
-- 正解（選択肢の中から1つ）
+- 正解の選択肢（選択肢の中から1つ）
 - 正解の詳細な解説
-JSON 形式で出力してください。
+
+出力形式は下記のjsonの形式でお願いいたします。
+
+{
+	"title" : "問題のタイトル",
+    "question":"問題文",
+    "choices":["選択肢1","選択肢2","選択肢3","選択肢4"],
+    "descriptions":["選択肢1の解説","選択肢2の解説","選択肢3の解説","選択肢4の解説"],
+	"ansewer": "正解の選択肢",
+	"explanation": "正解の詳細な解説"
+}
 `, topic)
 
 	resp, err := client.CreateChatCompletion(
@@ -101,17 +112,20 @@ JSON 形式で出力してください。
 		Answer       string   `json:"answer"`
 		Explanation  string   `json:"explanation"`
 	}
+
 	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &quizData); err != nil {
 		log.Println("AIのレスポンス解析エラー:", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "AIのレスポンス解析に失敗しました"})
 	}
+
+	userId := c.Get("user").(*auth.CognitoClaims).Sub
 
 	// 問題を保存
 	question := model.Question{
 		Title:      quizData.Title,
 		Content:    quizData.Content,
 		CategoryID: category.ID,
-		UserID:     "system",
+		UserID:     userId,
 	}
 	if err := dbConn.Create(&question).Error; err != nil {
 		log.Println("問題の保存エラー:", err)
@@ -135,7 +149,12 @@ JSON 形式で出力してください。
 
 		// 正解の選択肢IDを取得
 		if choice == quizData.Answer {
-			answerID = choiceModel.ID
+			var answer model.Choice
+			result := dbConn.Where("content = ?", choiceModel.Content).First(&answer)
+			if result.Error != nil {
+				log.Printf("failed to get answer from choiceTable :%v ", result.Error)
+			}
+			answerID = answer.ID
 		}
 	}
 

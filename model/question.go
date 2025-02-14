@@ -6,6 +6,7 @@ type Question struct {
 	ID         uint      `json:"id" gorm:"primaryKey;autoIncrement"`              // ID
 	UserID     string    `json:"user_id" gorm:"not null;type:varchar(255);index"` // UserID (string に統一)
 	CategoryID uint      `json:"category_id" gorm:"not null;index"`               // CategoryID
+	AnswerID   uint      `json:"answer_id" gorm:"not null;index"`                 // AnswerID
 	Title      string    `json:"title" gorm:"size:255;not null"`                  // タイトル
 	Content    string    `json:"content" gorm:"type:text;not null"`               // 問題文
 	Choice1ID  uint      `json:"choice1_id" gorm:"not null"`                      // 選択肢1
