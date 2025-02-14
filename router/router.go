@@ -56,6 +56,8 @@ func SetupRouter() *echo.Echo {
 
 	// 質問の作成エンドポイント
 	api.POST("/questions", handler.CreateQuestion)
+	//  AI 生成クイズ API
+	api.GET("/generate-quiz", handler.GenerateQuizHandler)
 
 	// 質問の作成エンドポイント
 	api.POST("/scores", handler.CreateScore)
