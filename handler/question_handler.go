@@ -16,7 +16,7 @@ func CreateQuestion(c echo.Context) error {
 	}
 
 	// 必須フィールドのバリデーション
-	if q.Title == "" || q.Content == "" || q.UserID == 0 || q.CategoryID == 0 {
+	if q.Title == "" || q.Content == "" || q.UserID == "" || q.CategoryID == 0 {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Missing required fields"})
 	}
 
