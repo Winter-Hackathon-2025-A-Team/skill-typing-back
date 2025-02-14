@@ -32,11 +32,14 @@ func SetupRouter() *echo.Echo {
 	if err != nil {
 		e.Logger.Fatal(err)
 	}
+	// authMiddlewareの初期化
+	authMiddleware := cognitoAuth.AuthMiddleware(cognitoService)
 
-	// Middleware
+	/*
+	* Middleware設定
+	 */
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	// CORSミドルウェアの設定
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"http://localhost:5173"},
 		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodPatch, http.MethodOptions},
@@ -57,9 +60,10 @@ func SetupRouter() *echo.Echo {
 
 	api := e.Group("/api")
 
-	// api配下にのみcorsMiddlwareを適用
-	api.Use(cognitoAuth.AuthMiddleware(cognitoService))
+	// api配下にのみauthMiddlwareを適用
+	api.Use(authMiddleware)
 
+	// authエンドポイント
 	api.GET("/auth", func(c echo.Context) error {
 		user := c.Get("user").(*auth.CognitoClaims)
 		return c.JSON(http.StatusOK, map[string]string{
@@ -70,7 +74,7 @@ func SetupRouter() *echo.Echo {
 	api.GET("/user/me", apiHandler.GetMe)
 	// 質問の作成エンドポイント
 	api.POST("/questions", apiHandler.CreateQuestion)
-	// 質問の作成エンドポイント
+	// スコアの作成エンドポイント
 	api.POST("/scores", apiHandler.CreateScore)
 
 	return e
