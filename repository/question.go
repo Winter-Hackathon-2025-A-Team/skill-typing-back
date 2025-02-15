@@ -14,3 +14,25 @@ func (r DbRepository) CreateQuestion(c echo.Context, question *model.Question) e
 	}
 	return nil
 }
+
+func (r DbRepository) GetQuestion(c echo.Context, id string) (model.Question, error) {
+
+	var question model.Question
+
+	if err := r.db.First(&question, id).Error; err != nil {
+		return question, fmt.Errorf("failed to get question : %v", err)
+	}
+
+	return question, nil
+}
+
+func (r DbRepository) GetAllQuestions(c echo.Context) ([]model.Question, error) {
+
+	var questions []model.Question
+
+	if err := r.db.Find(&questions).Error; err != nil {
+		return questions, fmt.Errorf("failed to get all question : %v", err)
+	}
+
+	return questions, nil
+}

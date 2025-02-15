@@ -12,8 +12,9 @@ func main() {
 	// DB 接続
 	dbConn := db.NewDB()
 	if dbConn == nil {
-		log.Fatal("Failed to connect to database")
+		log.Fatal("❌ データベースの初期化に失敗しました")
 	}
+	log.Println("✅ データベースの初期化に成功")
 
 	// DB を確実に閉じる
 	sqlDB, err := dbConn.DB()

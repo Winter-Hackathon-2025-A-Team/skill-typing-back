@@ -7,11 +7,11 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.49.4
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/jhosan7/cognito-jwt-verify v0.3.1
+	github.com/sashabaranov/go-openai v1.37.0
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.13.3
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/gorm v1.25.12
-
 )
 
 require (
