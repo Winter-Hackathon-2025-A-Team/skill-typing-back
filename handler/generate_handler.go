@@ -3,17 +3,18 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"skill-typing-back/auth"
-	"skill-typing-back/db"
 	"skill-typing-back/model"
 	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/sashabaranov/go-openai"
+	"gorm.io/gorm"
 )
 
 // 固定のカテゴリリスト
@@ -23,7 +24,7 @@ var validCategories = map[string]bool{
 }
 
 // AI を使って問題を生成し、データベースに保存
-func GenerateQuizHandler(c echo.Context) error {
+func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 	topic := c.QueryParam("topic")
 	categoryName := strings.TrimSpace(c.QueryParam("category"))
 
@@ -35,23 +36,17 @@ func GenerateQuizHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "カテゴリーを指定してください"})
 	}
 
-	// DBインスタンスを取得
-	dbConn := db.NewDB()
-	if dbConn == nil {
-		log.Println("データベース接続が確立されていません")
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "データベース接続エラー"})
-	}
-
 	// 新しいカテゴリーがリストになければ追加
 	if !validCategories[categoryName] {
 		validCategories[categoryName] = true
 	}
 
 	// カテゴリーを取得 or 作成
-	var category model.Category
-	if err := dbConn.Where("title = ?", categoryName).First(&category).Error; err != nil {
-		category = model.Category{Title: categoryName}
-		if err := dbConn.Create(&category).Error; err != nil {
+	category, err := h.repo.GetCategoryByTitle(c, categoryName)
+	// カテゴリの存在チェックをし、404が返却された場合、新規作成
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		newCategory := model.Category{Title: categoryName}
+		if err := h.repo.CreateCategory(c, &newCategory); err != nil {
 			log.Println("❌ カテゴリ作成エラー:", err)
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "カテゴリの作成に失敗しました"})
 		}
@@ -127,7 +122,7 @@ func GenerateQuizHandler(c echo.Context) error {
 		CategoryID: category.ID,
 		UserID:     userId,
 	}
-	if err := dbConn.Create(&question).Error; err != nil {
+	if err := h.repo.CreateQuestion(c, &question); err != nil {
 		log.Println("問題の保存エラー:", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "問題の保存に失敗しました"})
 	}
@@ -141,7 +136,7 @@ func GenerateQuizHandler(c echo.Context) error {
 			Content:     choice,
 			Description: quizData.Descriptions[i],
 		}
-		if err := dbConn.Create(&choiceModel).Error; err != nil {
+		if err := h.repo.CreateChoice(c, &choiceModel); err != nil {
 			log.Println("選択肢の保存エラー:", err)
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "選択肢の保存に失敗しました"})
 		}
@@ -149,10 +144,9 @@ func GenerateQuizHandler(c echo.Context) error {
 
 		// 正解の選択肢IDを取得
 		if choice == quizData.Answer {
-			var answer model.Choice
-			result := dbConn.Where("content = ?", choiceModel.Content).First(&answer)
-			if result.Error != nil {
-				log.Printf("failed to get answer from choiceTable :%v ", result.Error)
+			answer, err := h.repo.GetChoiceByContentAndQuestionId(c, choiceModel.Content, choiceModel.QuestionID)
+			if err != nil {
+				log.Printf("failed to get answer from choiceTable :%v ", err.Error())
 			}
 			answerID = answer.ID
 		}
@@ -164,13 +158,13 @@ func GenerateQuizHandler(c echo.Context) error {
 		ChoiceID:    answerID,
 		Explanation: quizData.Explanation,
 	}
-	if err := dbConn.Create(&answer).Error; err != nil {
+	if err := h.repo.CreateAnswer(c, &answer); err != nil {
 		log.Println("正解データの保存エラー:", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "正解データの保存に失敗しました"})
 	}
 
 	// **問題の正解IDを更新**
-	if err := dbConn.Model(&question).Update("AnswerID", answerID).Error; err != nil {
+	if err := h.repo.UpdateQuestion(c, &question, "AnswerID", answerID); err != nil {
 		log.Println("正解IDの更新エラー:", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "正解の設定に失敗しました"})
 	}

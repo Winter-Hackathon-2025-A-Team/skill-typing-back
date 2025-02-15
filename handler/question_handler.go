@@ -1,15 +1,16 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
-	"skill-typing-back/db"
 	"skill-typing-back/model"
 
 	"github.com/labstack/echo/v4"
 )
 
-// 問題の新規作成（ユーザーが手動で登録）
-func CreateQuestion(c echo.Context) error {
+// 問題の新規作成
+func (h *ApiHandler) CreateQuestion(c echo.Context) error {
+	// リクエストボディを取得
 	q := new(model.Question)
 	if err := c.Bind(q); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
@@ -20,14 +21,8 @@ func CreateQuestion(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Missing required fields"})
 	}
 
-	// DB 接続
-	dbConn := db.GetDB()
-	if dbConn == nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to connect to database"})
-	}
-
 	//データの保存
-	if err := dbConn.Create(q).Error; err != nil {
+	if err := h.repo.CreateQuestion(c, q); err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to create question"})
 	}
 
@@ -35,23 +30,24 @@ func CreateQuestion(c echo.Context) error {
 }
 
 // 特定の問題を取得
-func GetQuestion(c echo.Context) error {
+func (h *ApiHandler) GetQuestion(c echo.Context) error {
 	id := c.Param("id")
-	var question model.Question
 
-	dbConn := db.GetDB()
-	if err := dbConn.First(&question, id).Error; err != nil {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "Question not found"})
+	question, err := h.repo.GetQuestion(c, id)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": fmt.Sprintf("Question not found : %v", err)})
 	}
 
 	return c.JSON(http.StatusOK, question)
 }
 
 // すべての問題を取得
-func GetAllQuestions(c echo.Context) error {
-	var questions []model.Question
-	dbConn := db.GetDB()
-	dbConn.Find(&questions)
+func (h *ApiHandler) GetAllQuestions(c echo.Context) error {
+
+	questions, err := h.repo.GetAllQuestions(c)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": fmt.Sprintf("Question not found : %v", err)})
+	}
 
 	return c.JSON(http.StatusOK, questions)
 }
