@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func (r DbRepository) CreateScore(c echo.Context, score *model.Score) error {
+func (r *DbRepository) CreateScore(c echo.Context, score *model.Score) error {
 
 	if err := r.db.Create(&score).Error; err != nil {
 		return fmt.Errorf("failed to create score : %v", err)
