@@ -8,7 +8,7 @@ $ make up
 ```
 make db_create_user
 ```
-3. mysqlのDB初期化 (DBを作成したい場合も使用可)
+3. mysqlのDB初期化 (DBを再度作成したい場合も使用可)
 ```
 make db_init
 ```
@@ -27,7 +27,13 @@ $ make down
 
 DBにログインして、mysqlクライアントで操作をしたい場合は下記のコマンドが使えます。
 ```
-make db_login
+$ make db_login
+```
+
+DBを一旦全消去して、再度migrationをやりなおしたいときは、下記の２つを実行してください。
+```
+$ make db_init
+$ make db_migrate
 ```
 <!--
 dockerコンテナを削除した場合、ターミナルやコマンドプロンプトでのコマンド操作が必要です。
