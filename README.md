@@ -4,24 +4,38 @@
 ```
 $ make up
 ```
-
-2. go 開発用サーバーを起動
+2. mysqlのuser作成(初回起動時のみ)
+```
+make db_create_user
+```
+3. mysqlのDB初期化 (DBを作成したい場合も使用可)
+```
+make db_init
+```
+4. migrationコマンド実行
+```
+make db_migrate
+```
+5. go 開発用サーバーを起動
 ```
 $ make dev 
 ```
-
-3. dockerコンテナを削除
+6. dockerコンテナを削除
 ```
 $ make down 
 ```
 
-
+DBにログインして、mysqlクライアントで操作をしたい場合は下記のコマンドが使えます。
+```
+make db_login
+```
+<!--
 dockerコンテナを削除した場合、ターミナルやコマンドプロンプトでのコマンド操作が必要です。
 ```
-$ docker exec -it dev-mysql mysql -u root -p
+$ dockedb_initr exec -it dev-mysql mysql -u root -p
 ```           
 でdockerのmysqlに接続
-
+db_init
 ```
 CREATE USER 'myuser'@'%' IDENTIFIED WITH mysql_native_password BY 'root';
 GRANT ALL PRIVILEGES ON *.* TO 'myuser'@'%' WITH GRANT OPTION;
@@ -40,3 +54,4 @@ db/db.goを変更したとき
 ```
 $ GO_ENV=dev go run migrate/migrate.go
 ```
+-->
