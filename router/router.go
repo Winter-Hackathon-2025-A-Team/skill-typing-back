@@ -80,6 +80,8 @@ func SetupRouter() *echo.Echo {
 	api.GET("/scores/latest", apiHandler.GetLatestScore)
 	//  AI 生成クイズ API
 	api.GET("/generate-quiz", apiHandler.GenerateQuizHandler)
+	//ゲーム画面の取得エンドポイント
+	api.GET("/game/questions", handler.GetGameQuestions)
 
 	return e
 }
