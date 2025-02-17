@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"skill-typing-back/model"
 
@@ -8,28 +9,35 @@ import (
 	"gorm.io/gorm"
 )
 
-type GameRepository struct {
-	db *gorm.DB
-}
-
-func NewGameRepository(db *gorm.DB) *GameRepository {
-	return &GameRepository{db: db}
-}
-
-// ゲーム用の問題を取得する
-func (r *GameRepository) GetGameQuestions(c echo.Context) ([]model.Question, error) {
+// GetRandomQuestions はランダムに5つの質問を取得
+func (r *DbRepository) GetRandomQuestions(c echo.Context) ([]model.Question, error) {
 	var questions []model.Question
-	if err := r.db.Preload("Choices").Find(&questions).Error; err != nil {
-		return nil, fmt.Errorf("failed to get game questions: %v", err)
+	if err := r.db.Order("RAND()").Limit(5).Find(&questions).Error; err != nil {
+		return nil, fmt.Errorf("failed to get random questions: %v", err)
 	}
 	return questions, nil
 }
 
-// 追加のゲーム用問題を取得する
-func (r *GameRepository) GetAdditionalGameQuestions(c echo.Context) ([]model.Question, error) {
-	var questions []model.Question
-	if err := r.db.Preload("Choices").Order("created_at DESC").Limit(10).Find(&questions).Error; err != nil {
-		return nil, fmt.Errorf("failed to get additional game questions: %v", err)
+// GetChoicesByQuestionID は指定された質問の選択肢を取得
+func (r *DbRepository) GetChoicesByQuestionID(c echo.Context, questionID uint) ([]model.Choice, error) {
+	var choices []model.Choice
+	if err := r.db.Where("question_id = ?", questionID).Find(&choices).Error; err != nil {
+		// 404 のときだけ明示的にエラーを指定する。
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, gorm.ErrRecordNotFound
+		}
+		return nil, fmt.Errorf("failed to get choices for question: %v", err)
 	}
-	return questions, nil
+
+	// 選択肢が4つ未満の場合、ダミーデータを追加
+	for len(choices) < 4 {
+		choices = append(choices, model.Choice{
+			ID:          0,
+			QuestionID:  questionID,
+			Content:     "N/A",
+			Description: "この選択肢は利用できません",
+		})
+	}
+
+	return choices, nil
 }
