@@ -19,5 +19,17 @@ func (h *ApiHandler) GetMe(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, dbUser)
+	type UserResponse struct {
+		Name string `json:"name"`
+		IsAdmin bool `json:"is_admin"`
+		CreatedAt string `json:"created_at"`
+	}
+
+	response := UserResponse {
+		Name: dbUser.Name,
+		IsAdmin: dbUser.IsAdmin,
+		CreatedAt: dbUser.CreatedAt.Format("2006-01-02T15:04:05Z"),
+	}
+
+	return c.JSON(http.StatusOK, response)
 }

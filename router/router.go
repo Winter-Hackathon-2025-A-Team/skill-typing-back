@@ -71,11 +71,13 @@ func SetupRouter() *echo.Echo {
 		})
 	})
 	// ユーザー情報取得エンドポイント
-	api.GET("/user/me", apiHandler.GetMe)
+	api.GET("/users/me", apiHandler.GetMe)
 	// 質問の作成エンドポイント
 	api.POST("/questions", apiHandler.CreateQuestion)
 	// スコアの作成エンドポイント
 	api.POST("/scores", apiHandler.CreateScore)
+	// 最新スコア取得エンドポイント
+	api.GET("/scores/latest", apiHandler.GetLatestScore)
 	//  AI 生成クイズ API
 	api.GET("/generate-quiz", apiHandler.GenerateQuizHandler)
 
