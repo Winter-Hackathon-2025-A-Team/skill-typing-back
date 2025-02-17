@@ -4,26 +4,26 @@ import (
 	"net/http"
 	"skill-typing-back/db"
 	"skill-typing-back/model"
+	"skill-typing-back/repository"
 
 	"github.com/labstack/echo/v4"
 )
 
-// ゲーム用の問題をランダムに取得する
+// ゲーム用の問題を取得するハンドラー
 func GetGameQuestions(c echo.Context) error {
-	var questions []model.Question
 	dbConn := db.GetDB()
+	gameRepo := repository.NewGameRepository(dbConn)
 
-	// ランダムに5問取得
-	if err := dbConn.Order("RAND()").Limit(5).Find(&questions).Error; err != nil {
+	questions, err := gameRepo.GetRandomQuestions(5)
+	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "問題の取得に失敗しました"})
 	}
 
 	var response []map[string]interface{}
 
-	// 各問題に選択肢を取得して追加
 	for _, question := range questions {
-		var choices []model.Choice
-		if err := dbConn.Where("question_id = ?", question.ID).Find(&choices).Error; err != nil {
+		choices, err := gameRepo.GetChoicesByQuestionID(question.ID)
+		if err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "選択肢の取得に失敗しました"})
 		}
 
@@ -37,13 +37,12 @@ func GetGameQuestions(c echo.Context) error {
 			})
 		}
 
-		// JSON レスポンス用の構造
 		questionData := map[string]interface{}{
 			"id":                question.ID,
 			"title":             question.Title,
 			"content":           question.Content,
-			"choices":           choices[:4],       // 必ず4つに制限
-			"correct_choice_id": question.AnswerID, // 正解の選択肢ID
+			"choices":           choices[:4],
+			"correct_choice_id": question.AnswerID,
 		}
 
 		response = append(response, questionData)
