@@ -12,8 +12,8 @@ import (
 // GetRandomQuestions はランダムに5つの質問を取得
 func (r *DbRepository) GetRandomQuestions(c echo.Context) ([]model.Question, error) {
 	var questions []model.Question
-	if err := r.db.Order("RAND()").Limit(5).Find(&questions).Error; err != nil {
-		return nil, fmt.Errorf("failed to get random questions: %v", err)
+	if err := r.db.Preload("Choices").Preload("Category").Preload("Answer").Order("RAND()").Limit(5).Find(&questions).Error; err != nil {
+		return nil, err
 	}
 	return questions, nil
 }
