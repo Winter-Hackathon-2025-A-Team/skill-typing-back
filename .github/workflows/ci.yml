@@ -6,7 +6,7 @@ on:
       - '**/*.go' # Goファイルに変更があった場合のみ実行
 
 jobs:
-  static_check:
+  static_check_and_test:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,7 +21,13 @@ jobs:
           go-version: '1.23.5' # The Go version to download (if necessary) and use.
 
       # static_check(静的構文解析)を実行
-      - uses: dominikh/staticcheck-action@v1.3.1
+      - name: static_check
+        uses: dominikh/staticcheck-action@v1.3.1
         with:
           version: latest
           install-go: false
+      
+      - name: Run tests with coverage report output
+        run: go test ./... -coverprofile=coverage.out  
+
+      - uses: k1LoW/octocov-action@v1.4.0

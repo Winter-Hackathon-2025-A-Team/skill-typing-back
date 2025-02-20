@@ -198,7 +198,7 @@ func (a *CognitoAuth) AuthMiddleware(cognitoService *CognitoUserService) echo.Mi
 						return echo.ErrInternalServerError
 					}
 				} else {
-					log.Printf("Failed to get user: $v", err)
+					log.Printf("Failed to get user: %v", err)
 					return echo.ErrInternalServerError
 				}
 			}
