@@ -1,5 +1,7 @@
 name: "CI"
-on: ["push", "pull_request"]
+on: 
+  push:
+  pull_request:
     paths:
       - '**/*.go' # Goファイルに変更があった場合のみ実行
 
@@ -14,12 +16,12 @@ jobs:
 
       # golangの実行環境を作成
       - name: install golang
-      - uses: actions/setup-go@v5
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.16.1' # The Go version to download (if necessary) and use.
+          go-version: '1.23.5' # The Go version to download (if necessary) and use.
 
       # static_check(静的構文解析)を実行
       - uses: dominikh/staticcheck-action@v1.2.0
         with:
-        version: latest
-        install-go: false
+          version: latest
+          install-go: false
