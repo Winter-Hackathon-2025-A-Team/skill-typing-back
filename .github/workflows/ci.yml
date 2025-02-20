@@ -1,6 +1,9 @@
 name: "CI"
 on: 
   push:
+    branches:
+      - main
+      - development
   pull_request:
     paths:
       - '**/*.go' # Goファイルに変更があった場合のみ実行
@@ -8,6 +11,9 @@ on:
 jobs:
   static_check_and_test:
     runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
 
     steps:
       # リポジトリのクローン
