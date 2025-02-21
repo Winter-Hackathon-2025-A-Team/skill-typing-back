@@ -25,6 +25,8 @@ type DbRepositoryInterface interface {
 	GetQuestion(c echo.Context, id string) (*model.Question, error)
 	GetUser(id string) (*model.User, error)
 	UpdateQuestion(c echo.Context, question *model.Question, columnName string, updateValue interface{}) error
+	GetRandomQuestions(c echo.Context) ([]model.Question, error)
+	GetChoicesByQuestionID(c echo.Context, questionID uint) ([]model.Choice, error)
 }
 
 func New(db *gorm.DB) *DbRepository {
