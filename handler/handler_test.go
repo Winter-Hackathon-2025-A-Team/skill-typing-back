@@ -40,7 +40,7 @@ func (m *repositoryMock) CreateQuestion(c echo.Context, question *model.Question
 }
 
 func (m *repositoryMock) CreateScore(c echo.Context, score *model.Score) error {
-	args := m.Called()
+	args := m.Called(c, score)
 	return args.Error(0)
 }
 
@@ -94,7 +94,7 @@ func (m *repositoryMock) GetChoicesByQuestionID(c echo.Context, questionID uint)
 	return args.Get(0).([]model.Choice), args.Error(1)
 }
 
-func TestGetLatestScore(t *testing.T) {
+func TestGetLatestScoreSucess(t *testing.T) {
 	// Setup
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPost, "/scores/latest", nil)
@@ -131,6 +131,49 @@ func TestGetLatestScore(t *testing.T) {
 
 	if assert.NoError(t, h.GetLatestScore(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Equal(t, resp, strings.TrimSpace(rec.Body.String()))
+	}
+
+}
+
+func TestCreateScoreSuccess(t *testing.T) {
+	// Setup
+	e := echo.New()
+	recScore := `{"score": 88}`
+	req := httptest.NewRequest(http.MethodPost, "/scores", strings.NewReader(recScore))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	// userIDを設定
+	userID := "testSub"
+
+	// 期待されるレスポンス
+	resp := `{"message":"registered successfully"}`
+
+	// authMiddleware の処理
+	cognitoClaims := &auth.CognitoClaims{
+		Sub:      userID,
+		TokenUse: "access",
+	}
+	c.Set("user", cognitoClaims)
+
+	// mock作成
+	m := new(repositoryMock)
+
+	// mockに入力されるScore
+	score := model.Score{
+		UserID: userID,
+		Score:  88,
+	}
+
+	m.On("CreateScore", c, &score).Return(nil)
+
+	// handler
+	h := New(m)
+
+	if assert.NoError(t, h.CreateScore(c)) {
+		assert.Equal(t, http.StatusCreated, rec.Code)
 		assert.Equal(t, resp, strings.TrimSpace(rec.Body.String()))
 	}
 
