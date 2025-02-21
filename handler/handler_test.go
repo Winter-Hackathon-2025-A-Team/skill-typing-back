@@ -83,6 +83,16 @@ func (m *repositoryMock) UpdateQuestion(c echo.Context, question *model.Question
 	args := m.Called()
 	return args.Error(0)
 }
+func (m *repositoryMock) GetRandomQuestions(c echo.Context) ([]model.Question, error) {
+	args := m.Called()
+	return args.Get(0).([]model.Question), args.Error(1)
+
+}
+
+func (m *repositoryMock) GetChoicesByQuestionID(c echo.Context, questionID uint) ([]model.Choice, error) {
+	args := m.Called()
+	return args.Get(0).([]model.Choice), args.Error(1)
+}
 
 func TestGetLatestScore(t *testing.T) {
 	// Setup
