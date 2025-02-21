@@ -3,3 +3,4 @@
 .vscode
 .DC_Store
 /phpmyadmin/sessions/
+/cover*
