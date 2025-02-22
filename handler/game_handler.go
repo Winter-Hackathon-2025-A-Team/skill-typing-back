@@ -27,17 +27,14 @@ func (h *ApiHandler) GetGameQuestions(c echo.Context) error {
 		categoryID = uint(id)
 	}
 
+	// 質問の取得数を指定（最初は10件取得）
+	limit := 10
+
 	// 指定したカテゴリーの質問を取得
-	questions, err := h.repo.GetQuestionsByCategory(c, categoryID)
+	questions, err := h.repo.GetQuestionsByCategory(c, categoryID, limit)
 	if err != nil {
 		log.Println("データベースから問題を取得できませんでした:", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "問題の取得に失敗しました"})
-	}
-
-	// **デバッグ用ログ**
-	if len(questions) == 0 {
-		log.Println("指定したカテゴリーに問題がありません")
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "指定したカテゴリーに問題がありません"})
 	}
 
 	// JSON レスポンス用の構造体
