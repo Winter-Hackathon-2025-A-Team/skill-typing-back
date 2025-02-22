@@ -4,17 +4,31 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
 
-// GetGameQuestions はランダムなゲーム問題を取得する
+// GetGameQuestions は指定したカテゴリーのゲーム問題を取得する
 func (h *ApiHandler) GetGameQuestions(c echo.Context) error {
 	log.Println("GetGameQuestions 関数が呼び出されました")
 
-	// ランダムな質問を取得
-	questions, err := h.repo.GetRandomQuestions(c)
+	// クエリパラメータから category_id を取得
+	categoryIDStr := c.QueryParam("category_id")
+	var categoryID uint
+
+	if categoryIDStr != "" {
+		id, err := strconv.Atoi(categoryIDStr)
+		if err != nil {
+			log.Println("category_id のパースに失敗:", err)
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "無効な category_id です"})
+		}
+		categoryID = uint(id)
+	}
+
+	// 指定したカテゴリーの質問を取得
+	questions, err := h.repo.GetQuestionsByCategory(c, categoryID)
 	if err != nil {
 		log.Println("データベースから問題を取得できませんでした:", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "問題の取得に失敗しました"})
@@ -22,8 +36,8 @@ func (h *ApiHandler) GetGameQuestions(c echo.Context) error {
 
 	// **デバッグ用ログ**
 	if len(questions) == 0 {
-		log.Println("データベースに問題がありません")
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "データベースに問題がありません"})
+		log.Println("指定したカテゴリーに問題がありません")
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "指定したカテゴリーに問題がありません"})
 	}
 
 	// JSON レスポンス用の構造体

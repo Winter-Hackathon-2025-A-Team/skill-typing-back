@@ -81,7 +81,7 @@ func SetupRouter() *echo.Echo {
 	//  AI 生成クイズ API
 	api.GET("/generate-quiz", apiHandler.GenerateQuizHandler)
 	//ゲーム画面の取得エンドポイント
-	api.GET("/game/questions", apiHandler.GetGameQuestions)
+	e.GET("api/game/questions", apiHandler.GetGameQuestions)
 
 	return e
 }
