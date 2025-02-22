@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -13,12 +12,6 @@ import (
 var DB *gorm.DB // グローバルな DB 変数
 
 func NewDB() *gorm.DB {
-	if os.Getenv("GO_ENV") == "dev" {
-		err := godotenv.Load()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
 	url := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True",
 		os.Getenv("MYSQL_USER"),
 		os.Getenv("MYSQL_PW"),
