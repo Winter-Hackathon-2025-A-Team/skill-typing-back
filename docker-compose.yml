@@ -8,6 +8,8 @@ services:
     ports:
       - '1323:1323'
     tty: true
+    env_file:
+      - .env
     networks:
       - app-network
     depends_on:
