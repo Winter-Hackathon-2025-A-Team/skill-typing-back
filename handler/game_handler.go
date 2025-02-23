@@ -10,11 +10,10 @@ import (
 	"gorm.io/gorm"
 )
 
-// GetGameQuestions は指定したカテゴリーのゲーム問題を取得する
-func (h *ApiHandler) GetGameQuestions(c echo.Context) error {
-	log.Println("GetGameQuestions 関数が呼び出されました")
+// getGameQuestions は指定したカテゴリーのゲーム問題を取得する共通関数
+func (h *ApiHandler) getGameQuestions(c echo.Context, limit int) error {
+	log.Println("getGameQuestions 関数が呼び出されました")
 
-	// クエリパラメータから category_id を取得
 	categoryIDStr := c.QueryParam("category_id")
 	var categoryID uint
 
@@ -27,17 +26,14 @@ func (h *ApiHandler) GetGameQuestions(c echo.Context) error {
 		categoryID = uint(id)
 	}
 
-	// 質問の取得数を指定（最初は10件取得）
-	limit := 10
-
-	// 指定したカテゴリーの質問を取得
-	questions, err := h.repo.GetQuestionsByCategory(c, categoryID, limit)
+	//  修正：categoryID と limit のみ渡す
+	questions, err := h.repo.GetQuestionsByCategory(categoryID, limit)
 	if err != nil {
 		log.Println("データベースから問題を取得できませんでした:", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "問題の取得に失敗しました"})
 	}
 
-	// JSON レスポンス用の構造体
+	// JSON レスポンスを作成
 	type Choice struct {
 		ID          uint   `json:"id"`
 		Content     string `json:"content"`
@@ -60,9 +56,8 @@ func (h *ApiHandler) GetGameQuestions(c echo.Context) error {
 		Questions []Question `json:"questions"`
 	}{}
 
-	// 取得した質問データを JSON 構造に整形
+	// データをレスポンス形式に変換
 	for _, question := range questions {
-		// 質問に紐づく選択肢を取得
 		choices, err := h.repo.GetChoicesByQuestionID(c, question.ID)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -73,7 +68,6 @@ func (h *ApiHandler) GetGameQuestions(c echo.Context) error {
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "選択肢の取得に失敗しました"})
 		}
 
-		// 選択肢リストを作成
 		choiceList := []Choice{}
 		for _, choice := range choices {
 			choiceList = append(choiceList, Choice{
@@ -83,7 +77,6 @@ func (h *ApiHandler) GetGameQuestions(c echo.Context) error {
 			})
 		}
 
-		// 選択肢が4つ未満の場合、ダミーデータを追加
 		for len(choiceList) < 4 {
 			choiceList = append(choiceList, Choice{
 				ID:          0,
@@ -92,7 +85,6 @@ func (h *ApiHandler) GetGameQuestions(c echo.Context) error {
 			})
 		}
 
-		// 質問データを作成
 		q := Question{
 			ID:       question.ID,
 			Title:    question.Title,
@@ -103,10 +95,19 @@ func (h *ApiHandler) GetGameQuestions(c echo.Context) error {
 		q.Category.ID = question.Category.ID
 		q.Category.Title = question.Category.Title
 
-		// レスポンスに追加
 		response.Questions = append(response.Questions, q)
 	}
 
-	log.Println("GetGameQuestions のレスポンスを正常に返却します")
+	log.Println("getGameQuestions のレスポンスを正常に返却します")
 	return c.JSON(http.StatusOK, response)
+}
+
+// GetGameQuestions は最初の8問を取得するAPI
+func (h *ApiHandler) GetGameQuestions(c echo.Context) error {
+	return h.getGameQuestions(c, 8)
+}
+
+// GetAdditionalGameQuestionsは追加のゲーム問題を取得するAPI
+func (h *ApiHandler) GetAdditionalGameQuestions(c echo.Context) error {
+	return h.getGameQuestions(c, 5)
 }
