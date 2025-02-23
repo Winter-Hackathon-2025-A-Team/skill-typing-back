@@ -75,7 +75,7 @@ func (m *repositoryMock) GetQuestion(c echo.Context, id string) (*model.Question
 }
 
 func (m *repositoryMock) GetUser(id string) (*model.User, error) {
-	args := m.Called()
+	args := m.Called(id)
 	return args.Get(0).(*model.User), args.Error(1)
 }
 
@@ -92,6 +92,48 @@ func (m *repositoryMock) GetRandomQuestions(c echo.Context) ([]model.Question, e
 func (m *repositoryMock) GetChoicesByQuestionID(c echo.Context, questionID uint) ([]model.Choice, error) {
 	args := m.Called()
 	return args.Get(0).([]model.Choice), args.Error(1)
+}
+
+// ユーザー取得テスト
+func TestGetMeSuccess(t *testing.T) {
+	// Setup
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/users/me", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	// userIDを設定
+	userID := "testSub"
+	cognitoClaims := &auth.CognitoClaims{Sub: userID}
+	c.Set("user", cognitoClaims)
+
+	// モックリポジトリの設定
+	expectedUser := &model.User{
+		ID: userID,
+		Name: "Test User",
+		IsAdmin: true,
+		CreatedAt: time.Now().UTC(),
+	}
+	m := new(repositoryMock)
+	m.On("GetUser", userID).Return(expectedUser, nil)
+
+	// ハンドラーの作成
+	h := New(m)
+
+	// ハンドラーの実行
+	err := h.GetMe(c)
+
+	// アサーション
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	// レスポンスの検証
+	expectedCreatedAt := expectedUser.CreatedAt.Format("2006-01-02T15:04:05Z")
+	expectedJSON := `{"name":"Test User","is_admin":true,"created_at":"` + expectedCreatedAt + `"}` 
+	assert.JSONEq(t, expectedJSON, strings.TrimSpace(rec.Body.String()))
+
+	// モックが期待通りに呼び出されたか検証
+	m.AssertExpectations(t)
 }
 
 func TestGetLatestScoreSucess(t *testing.T) {
