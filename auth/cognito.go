@@ -202,20 +202,6 @@ func (a *CognitoAuth) AuthMiddleware(cognitoService *CognitoUserService) echo.Mi
 					return echo.ErrInternalServerError
 				}
 			}
-			// Cognitoからユーザー情報を取得してログ出力
-			// userInfo, err := cognitoService.GetUserInfo(c.Request().Context(), token)
-			// if err != nil {
-			// 	log.Printf("Failed to get user info from Cognito: %v", err)
-			// } else {
-			// 	log.Printf("Cognito User Attributes:")
-			// 	for _, attr :=range userInfo.UserAttributes {
-			// 		if attr.Name != nil && attr.Value != nil {
-			// 			log.Printf(" %s: %s", *attr.Name, *attr.Value)
-			// 		}
-			// 	}
-			// }
-
-			// log.Printf("Authentication successful - UserSub: %s", cognitoClaims.Sub)
 
 			c.Set("user", cognitoClaims)
 			c.Set("dbUser", user)
