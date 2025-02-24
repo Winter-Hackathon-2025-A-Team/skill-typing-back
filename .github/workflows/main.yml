@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - development
+  workflow_dispatch:
     # paths:
     #   - '**/*.go' # Goファイルに変更があった場合のみ実行
 
