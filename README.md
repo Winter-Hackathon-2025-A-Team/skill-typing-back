@@ -2,7 +2,7 @@
 ## ローカル環境構築
 1. dockerコンテナを起動
 ```
-$ make up
+make up
 ```
 2. mysqlのuser作成(初回起動時のみ)
 ```
@@ -18,22 +18,22 @@ make db_migrate
 ```
 5. go 開発用サーバーを起動
 ```
-$ make dev 
+make dev 
 ```
 6. dockerコンテナを削除
 ```
-$ make down 
+make down 
 ```
 
 DBにログインして、mysqlクライアントで操作をしたい場合は下記のコマンドが使えます。
 ```
-$ make db_login
+make db_login
 ```
 
 DBを一旦全消去して、再度migrationをやりなおしたいときは、下記の２つを実行してください。
 ```
-$ make db_init
-$ make db_migrate
+make db_init
+make db_migrate
 ```
 <!--
 dockerコンテナを削除した場合、ターミナルやコマンドプロンプトでのコマンド操作が必要です。
