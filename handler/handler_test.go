@@ -136,6 +136,54 @@ func TestGetMeSuccess(t *testing.T) {
 	m.AssertExpectations(t)
 }
 
+// ユーザー取得時コンテキストが無い時のエラーテスト
+func TestGetMeUserNotInContext(t *testing.T) {
+
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/users/me", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	m := new(repositoryMock)
+	h := New(m)
+
+	err := h.GetMe(c)
+
+	he, ok := err.(*echo.HTTPError)
+	assert.True(t, ok)
+	assert.Equal(t, http.StatusInternalServerError, he.Code)
+	assert.Equal(t, "User information not found in context", he.Message)
+}
+
+// ユーザー取得が失敗する時のテスト
+func TestGetMeUserFails(t *testing.T) {
+
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/users/me", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	// userIDを設定
+	userID := "testSub"
+	cognitoClaims := &auth.CognitoClaims{Sub: userID}
+	c.Set("user", cognitoClaims)
+
+	m := new(repositoryMock)
+	m.On("GetUser", userID).Return(
+		(*model.User)(nil), 
+		echo.NewHTTPError(http.StatusInternalServerError, "Database error"),
+		)
+
+	h := New(m)
+
+	err := h.GetMe(c)
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	expectedJSON := `{"error": "Failed to get user info"}`
+	assert.JSONEq(t, expectedJSON, strings.TrimSpace(rec.Body.String()))
+}
+
 func TestGetLatestScoreSucess(t *testing.T) {
 	// Setup
 	e := echo.New()
