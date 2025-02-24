@@ -12,7 +12,9 @@ func (h *ApiHandler) GetMe(c echo.Context) error {
 
 	user, ok := c.Get("user").(*auth.CognitoClaims)
 	if !ok {
-		return echo.NewHTTPError(http.StatusInternalServerError, "User information not found in context")
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error":"User information not found in context",
+		})
 	}
 
 	dbUser, err := h.repo.GetUser(user.Sub)
