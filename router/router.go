@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"os"
 	"skill-typing-back/auth"
 	"skill-typing-back/db"
 	"skill-typing-back/handler"
@@ -41,7 +42,7 @@ func SetupRouter() *echo.Echo {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowOrigins:     []string{os.Getenv("CORS_ALLOWED_ORIGIN")},
 		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodPatch, http.MethodOptions},
 		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 		AllowCredentials: true,
