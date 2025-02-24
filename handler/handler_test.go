@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"skill-typing-back/auth"
@@ -147,12 +148,10 @@ func TestGetMeUserNotInContext(t *testing.T) {
 	m := new(repositoryMock)
 	h := New(m)
 
-	err := h.GetMe(c)
-
-	he, ok := err.(*echo.HTTPError)
-	assert.True(t, ok)
-	assert.Equal(t, http.StatusInternalServerError, he.Code)
-	assert.Equal(t, "User information not found in context", he.Message)
+	h.GetMe(c)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	expectedJSON := `{"error":"User information not found in context"}`
+	assert.JSONEq(t, expectedJSON, strings.TrimSpace(rec.Body.String()))
 }
 
 // ユーザー取得が失敗する時のテスト
@@ -171,7 +170,7 @@ func TestGetMeUserFails(t *testing.T) {
 	m := new(repositoryMock)
 	m.On("GetUser", userID).Return(
 		(*model.User)(nil), 
-		echo.NewHTTPError(http.StatusInternalServerError, "Database error"),
+		errors.New("Database error"),
 		)
 
 	h := New(m)
