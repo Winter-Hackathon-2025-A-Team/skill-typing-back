@@ -33,7 +33,7 @@ func (r *DbRepository) GetChoicesByQuestionID(c echo.Context, questionID uint) (
 	for len(choices) < 4 {
 		choices = append(choices, model.Choice{
 			ID:          0,
-			QuestionID:  questionID,
+			// QuestionID:  questionID,
 			Content:     "N/A",
 			Description: "この選択肢は利用できません",
 		})
