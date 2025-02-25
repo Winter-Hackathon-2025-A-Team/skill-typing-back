@@ -42,6 +42,7 @@ func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 	}
 
 	// カテゴリーを取得 or 作成
+	var category model.Category
 	category, err := h.repo.GetCategoryByTitle(c, categoryName)
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 		newCategory := model.Category{Title: categoryName}
@@ -50,6 +51,9 @@ func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "カテゴリの作成に失敗しました"})
 		}
 		category = newCategory
+	} else if err != nil {
+		log.Println("❌ カテゴリ取得エラー:", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "カテゴリの取得に失敗しました"})
 	}
 
 	// OpenAI API キー取得
@@ -115,57 +119,69 @@ func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 
 	userId := c.Get("user").(*auth.CognitoClaims).Sub
 
+	// 4つの選択肢を保存
+	var choice1, choice2, choice3, choice4 model.Choice
+	var choices = []model.Choice{}
+	var answerChoiceID uint
+
+	// 選択肢を作成
+	for i, choiceContent := range quizData.Choices {
+		choice := model.Choice{
+			Content: choiceContent,
+			Description: quizData.Descriptions[i],
+		}
+
+		if err := h.repo.CreateChoice(c, &choice); err != nil {
+			log.Println("選択肢の保存エラー:", err)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "選択肢の保存に失敗しました"})
+		}
+
+		choices = append(choices, choice)
+
+		// 正解の選択肢IDを記録
+		if choiceContent == quizData.Answer {
+			answerChoiceID = choice.ID
+		}
+
+		// 各選択肢をそれぞれの変数に格納
+		switch i {
+		case 0:
+			choice1 = choice
+		case 1:
+			choice2 = choice
+		case 2:
+			choice3 = choice
+		case 3:
+			choice4 = choice
+		}
+	}
+
 	// 問題を保存
 	question := model.Question{
 		Title:      quizData.Title,
 		Content:    quizData.Content,
 		CategoryID: category.ID,
 		UserID:     userId,
+		Choice1ID: choice1.ID,
+		Choice2ID: choice2.ID,
+		Choice3ID: choice3.ID,
+		Choice4ID: choice4.ID,
 	}
+
 	if err := h.repo.CreateQuestion(c, &question); err != nil {
 		log.Println("問題の保存エラー:", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "問題の保存に失敗しました"})
 	}
 
-	// 選択肢を保存
-	var answerID uint
-	var choices []model.Choice
-	for i, choice := range quizData.Choices {
-		choiceModel := model.Choice{
-			Content:     choice,
-			Description: quizData.Descriptions[i],
-		}
-		if err := h.repo.CreateChoice(c, &choiceModel); err != nil {
-			log.Println("選択肢の保存エラー:", err)
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "選択肢の保存に失敗しました"})
-		}
-		choices = append(choices, choiceModel)
-
-		// 正解の選択肢IDを取得
-		if choice == quizData.Answer {
-			answer, err := h.repo.GetChoiceByContentAndQuestionId(c, choiceModel.Content, question.ID) //  `question.ID` を追加
-			if err != nil {
-				log.Printf("failed to get answer from choiceTable :%v ", err.Error())
-			}
-			answerID = answer.ID
-		}
-	}
-
 	// 正解データを `answers` テーブルに保存
 	answer := model.Answer{
 		QuestionID:  question.ID,
-		ChoiceID:    answerID,
+		ChoiceID:    answerChoiceID,
 		Explanation: quizData.Explanation,
 	}
 	if err := h.repo.CreateAnswer(c, &answer); err != nil {
 		log.Println("正解データの保存エラー:", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "正解データの保存に失敗しました"})
-	}
-
-	// **問題の正解IDを更新**
-	if err := h.repo.UpdateQuestion(c, &question, "AnswerID", answerID); err != nil {
-		log.Println("正解IDの更新エラー:", err)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "正解の設定に失敗しました"})
 	}
 
 	// **レスポンス**
