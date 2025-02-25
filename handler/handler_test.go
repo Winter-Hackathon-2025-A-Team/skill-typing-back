@@ -89,8 +89,14 @@ func (m *repositoryMock) GetRandomQuestions(c echo.Context) ([]model.Question, e
 
 }
 
-func (m *repositoryMock) GetChoicesByQuestionID(c echo.Context, questionID uint) ([]model.Choice, error) {
-	args := m.Called()
+func (m *repositoryMock) GetQuestionsByCategory(categoryID uint, limit int) ([]model.Question, error) {
+	args := m.Called(categoryID, limit)
+	return args.Get(0).([]model.Question), args.Error(1)
+}
+
+// GetChoicesByQuestionID を追加
+func (m *repositoryMock) GetChoicesByQuestionID(questionID uint) ([]model.Choice, error) {
+	args := m.Called(questionID)
 	return args.Get(0).([]model.Choice), args.Error(1)
 }
 
@@ -109,9 +115,9 @@ func TestGetMeSuccess(t *testing.T) {
 
 	// モックリポジトリの設定
 	expectedUser := &model.User{
-		ID: userID,
-		Name: "Test User",
-		IsAdmin: true,
+		ID:        userID,
+		Name:      "Test User",
+		IsAdmin:   true,
 		CreatedAt: time.Now().UTC(),
 	}
 	m := new(repositoryMock)
@@ -129,7 +135,7 @@ func TestGetMeSuccess(t *testing.T) {
 
 	// レスポンスの検証
 	expectedCreatedAt := expectedUser.CreatedAt.Format("2006-01-02T15:04:05Z")
-	expectedJSON := `{"name":"Test User","is_admin":true,"created_at":"` + expectedCreatedAt + `"}` 
+	expectedJSON := `{"name":"Test User","is_admin":true,"created_at":"` + expectedCreatedAt + `"}`
 	assert.JSONEq(t, expectedJSON, strings.TrimSpace(rec.Body.String()))
 
 	// モックが期待通りに呼び出されたか検証
