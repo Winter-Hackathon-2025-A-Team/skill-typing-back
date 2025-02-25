@@ -89,13 +89,12 @@ func (m *repositoryMock) GetRandomQuestions(c echo.Context) ([]model.Question, e
 
 }
 
-func (m *repositoryMock) GetQuestionsByCategory(categoryID uint, limit int) ([]model.Question, error) {
+func (m *repositoryMock) GetQuestionsByCategory(c echo.Context, categoryID uint, limit int) ([]model.Question, error) {
 	args := m.Called(categoryID, limit)
 	return args.Get(0).([]model.Question), args.Error(1)
 }
 
-// GetChoicesByQuestionID を追加
-func (m *repositoryMock) GetChoicesByQuestionID(questionID uint) ([]model.Choice, error) {
+func (m *repositoryMock) GetChoicesByQuestionID(c echo.Context, questionID uint) ([]model.Choice, error) {
 	args := m.Called(questionID)
 	return args.Get(0).([]model.Choice), args.Error(1)
 }
