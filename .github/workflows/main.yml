@@ -3,9 +3,10 @@ name: Push to ECR
 on:
   push:
     branches:
-      - main
-    paths:
-      - '**/*.go' # Goファイルに変更があった場合のみ実行
+      - development
+  workflow_dispatch:
+    # paths:
+    #   - '**/*.go' # Goファイルに変更があった場合のみ実行
 
 jobs:
   build-and-push:
@@ -34,7 +35,7 @@ jobs:
       # Dockerイメージのビルド
       - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.ECR_REPOSITORY }}:${{ secrets.IMAGE_TAG }} -f Dockerfile.prod .
+          docker build -t ${{ secrets.ECR_REPOSITORY }}:${{ secrets.IMAGE_TAG }} -f infra/Dockerfile.prod .
 
       # Dockerイメージのタグ付け
       - name: Tag Docker image

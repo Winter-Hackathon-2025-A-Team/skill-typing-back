@@ -1,13 +1,26 @@
 FROM golang:1.23.5-alpine3.21 AS builder
 WORKDIR /usr/src/app
 
+# go.mod と go.sum を先にコピーし、依存関係をダウンロード
 COPY go.mod go.sum ./
 RUN go mod download
 
+# アプリケーションのソースコードをコピー
 COPY . .
 
+# メインアプリケーションのビルド
 RUN CGO_ENABLED=0 GOOS=linux go build -o server .
 
+# マイグレーション用のバイナリを作成
+RUN CGO_ENABLED=0 GOOS=linux go build -o migrate_app migrate/migrate.go
+
+# 軽量なAlpineベースのイメージを使用
 FROM alpine:3.21
+WORKDIR /app
+
+# 必要なバイナリをコピー
 COPY --from=builder /usr/src/app/server .
-CMD ["./server"]
+COPY --from=builder /usr/src/app/migrate_app .
+
+# マイグレーションを実行してからアプリケーションを起動
+CMD ["/bin/sh", "-c", "/app/migrate_app && /app/server"]

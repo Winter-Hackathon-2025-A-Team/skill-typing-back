@@ -10,7 +10,10 @@ import (
 // ログインユーザーの情報を取得する
 func (h *ApiHandler) GetMe(c echo.Context) error {
 
-	user := c.Get("user").(*auth.CognitoClaims)
+	user, ok := c.Get("user").(*auth.CognitoClaims)
+	if !ok {
+		return echo.NewHTTPError(http.StatusInternalServerError, "User information not found in context")
+	}
 
 	dbUser, err := h.repo.GetUser(user.Sub)
 	if err != nil {
