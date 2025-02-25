@@ -43,13 +43,13 @@ func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 
 	// カテゴリーを取得 or 作成
 	category, err := h.repo.GetCategoryByTitle(c, categoryName)
-	// カテゴリの存在チェックをし、404が返却された場合、新規作成
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 		newCategory := model.Category{Title: categoryName}
 		if err := h.repo.CreateCategory(c, &newCategory); err != nil {
 			log.Println("❌ カテゴリ作成エラー:", err)
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "カテゴリの作成に失敗しました"})
 		}
+		category = newCategory
 	}
 
 	// OpenAI API キー取得
@@ -78,7 +78,7 @@ func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
     "question":"問題文",
     "choices":["選択肢1","選択肢2","選択肢3","選択肢4"],
     "descriptions":["選択肢1の解説","選択肢2の解説","選択肢3の解説","選択肢4の解説"],
-	"ansewer": "正解の選択肢",
+	"answer": "正解の選択肢",
 	"explanation": "正解の詳細な解説"
 }
 `, topic)
@@ -132,7 +132,6 @@ func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 	var choices []model.Choice
 	for i, choice := range quizData.Choices {
 		choiceModel := model.Choice{
-			// QuestionID:  question.ID,
 			Content:     choice,
 			Description: quizData.Descriptions[i],
 		}
@@ -144,7 +143,7 @@ func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 
 		// 正解の選択肢IDを取得
 		if choice == quizData.Answer {
-			answer, err := h.repo.GetChoiceByContentAndQuestionId(c, choiceModel.Content, choiceModel.QuestionID)
+			answer, err := h.repo.GetChoiceByContentAndQuestionId(c, choiceModel.Content, question.ID) //  `question.ID` を追加
 			if err != nil {
 				log.Printf("failed to get answer from choiceTable :%v ", err.Error())
 			}
