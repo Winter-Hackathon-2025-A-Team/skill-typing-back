@@ -11,6 +11,29 @@ type DbRepository struct {
 	db *gorm.DB
 }
 
+// GetChoicesByQuestionID implements DbRepositoryInterface.
+func (r *DbRepository) GetChoicesByQuestionID(c echo.Context, questionID uint) ([]model.Choice, error) {
+	var choices []model.Choice
+	if err := r.db.Where("question_id = ?", questionID).Find(&choices).Error; err != nil {
+		return nil, err
+	}
+	return choices, nil
+}
+
+// GetQuestionsByCategory implements DbRepositoryInterface.
+func (r *DbRepository) GetQuestionsByCategory(c echo.Context, categoryID uint, limit int) ([]model.Question, error) {
+	var questions []model.Question
+	if err := r.db.Where("category_id = ?", categoryID).Limit(limit).Find(&questions).Error; err != nil {
+		return nil, err
+	}
+	return questions, nil
+}
+
+// GetRandomQuestions implements DbRepositoryInterface.
+func (r *DbRepository) GetRandomQuestions(c echo.Context) ([]model.Question, error) {
+	panic("unimplemented")
+}
+
 type DbRepositoryInterface interface {
 	CreateAnswer(c echo.Context, ansewer *model.Answer) error
 	CreateCategory(c echo.Context, category *model.Category) error
@@ -26,6 +49,7 @@ type DbRepositoryInterface interface {
 	GetUser(id string) (*model.User, error)
 	UpdateQuestion(c echo.Context, question *model.Question, columnName string, updateValue interface{}) error
 	GetRandomQuestions(c echo.Context) ([]model.Question, error)
+	GetQuestionsByCategory(c echo.Context, categoryID uint, limit int) ([]model.Question, error)
 	GetChoicesByQuestionID(c echo.Context, questionID uint) ([]model.Choice, error)
 }
 
