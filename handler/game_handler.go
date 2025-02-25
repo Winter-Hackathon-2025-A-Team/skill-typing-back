@@ -1,13 +1,15 @@
 package handler
 
 import (
-	"errors"
+	"errors" // ✅ errors を追加
 	"log"
 	"net/http"
 	"strconv"
 
+	"skill-typing-back/model" // ✅ model をインポート
+
 	"github.com/labstack/echo/v4"
-	"gorm.io/gorm"
+	"gorm.io/gorm" // ✅ gorm を追加
 )
 
 // getGameQuestions は指定したカテゴリーのゲーム問題を取得する共通関数
@@ -26,76 +28,21 @@ func (h *ApiHandler) getGameQuestions(c echo.Context, limit int) error {
 		categoryID = uint(id)
 	}
 
-	//  修正：categoryID と limit のみ渡す
-	questions, err := h.repo.GetQuestionsByCategory(categoryID, limit)
+	// ✅ 修正: `c` を引数に追加
+	questions, err := h.repo.GetQuestionsByCategory(c, categoryID, limit)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) { // ✅ gorm を使ってエラーハンドリング
+			log.Println("指定されたカテゴリの問題が見つかりません")
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "指定されたカテゴリの問題が見つかりません"})
+		}
 		log.Println("データベースから問題を取得できませんでした:", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "問題の取得に失敗しました"})
 	}
 
-	// JSON レスポンスを作成
-	type Choice struct {
-		ID          uint   `json:"id"`
-		Content     string `json:"content"`
-		Description string `json:"description"`
-	}
-
-	type Question struct {
-		ID       uint   `json:"id"`
-		Title    string `json:"title"`
-		Content  string `json:"content"`
-		Category struct {
-			ID    uint   `json:"id"`
-			Title string `json:"title"`
-		} `json:"category"`
-		AnswerID uint     `json:"answer_id"`
-		Choices  []Choice `json:"choices"`
-	}
-
+	// JSON レスポンス作成
 	response := struct {
-		Questions []Question `json:"questions"`
-	}{}
-
-	// データをレスポンス形式に変換
-	for _, question := range questions {
-		choices, err := h.repo.GetChoicesByQuestionID(question.ID)
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				log.Println("選択肢が見つかりません:", question.ID)
-				return c.JSON(http.StatusNotFound, map[string]string{"error": "選択肢が見つかりません"})
-			}
-			log.Println("選択肢の取得に失敗しました:", err)
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "選択肢の取得に失敗しました"})
-		}
-
-		choiceList := []Choice{}
-		for _, choice := range choices {
-			choiceList = append(choiceList, Choice{
-				ID:          choice.ID,
-				Content:     choice.Content,
-				Description: choice.Description,
-			})
-		}
-
-		for len(choiceList) < 4 {
-			choiceList = append(choiceList, Choice{
-				ID:          0,
-				Content:     "N/A",
-				Description: "この選択肢は利用できません",
-			})
-		}
-
-		q := Question{
-			ID:      question.ID,
-			Title:   question.Title,
-			Content: question.Content,
-			Choices: choiceList,
-		}
-		q.Category.ID = question.Category.ID
-		q.Category.Title = question.Category.Title
-
-		response.Questions = append(response.Questions, q)
-	}
+		Questions []model.Question `json:"questions"` // ✅ model.Question を使用
+	}{Questions: questions}
 
 	log.Println("getGameQuestions のレスポンスを正常に返却します")
 	return c.JSON(http.StatusOK, response)
