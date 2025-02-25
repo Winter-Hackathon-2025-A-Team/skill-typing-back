@@ -26,12 +26,12 @@ func main() {
 	// マイグレーション実行（外部キーの順番に注意）
 	fmt.Println("Starting migration...")
 	err = dbConn.AutoMigrate(
-		&model.User{},     // 1. ユーザー（独立）
-		&model.Category{}, // 2. カテゴリー（独立）
-		&model.Question{}, // 3. 質問（User, Category に依存）
-		&model.Answer{},   // 4. 回答（Question に依存）
-		&model.Choice{},   // 5. 選択肢（Question に依存）
-		&model.Score{},    // 6. スコア（User に依存）
+		&model.User{},     
+		&model.Category{},
+		&model.Choice{}, 
+		&model.Question{}, 
+		&model.Answer{},   
+		&model.Score{},    
 	)
 	if err != nil {
 		log.Fatal("Migration failed:", err)
