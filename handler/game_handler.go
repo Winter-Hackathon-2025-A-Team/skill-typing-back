@@ -58,7 +58,7 @@ func (h *ApiHandler) getGameQuestions(c echo.Context, limit int) error {
 
 	// データをレスポンス形式に変換
 	for _, question := range questions {
-		choices, err := h.repo.GetChoicesByQuestionID(c, question.ID)
+		choices, err := h.repo.GetChoicesByQuestionID(question.ID)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				log.Println("選択肢が見つかりません:", question.ID)
@@ -86,11 +86,10 @@ func (h *ApiHandler) getGameQuestions(c echo.Context, limit int) error {
 		}
 
 		q := Question{
-			ID:       question.ID,
-			Title:    question.Title,
-			Content:  question.Content,
-			AnswerID: question.AnswerID,
-			Choices:  choiceList,
+			ID:      question.ID,
+			Title:   question.Title,
+			Content: question.Content,
+			Choices: choiceList,
 		}
 		q.Category.ID = question.Category.ID
 		q.Category.Title = question.Category.Title
