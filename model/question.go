@@ -18,6 +18,6 @@ type Question struct {
 
 	User     User     `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE;"`     // ユーザーとのリレーション
 	Category Category `gorm:"foreignKey:CategoryID;constraint:OnDelete:CASCADE;"`               // カテゴリとのリレーション
-	Answer   Answer   `gorm:"foreignKey:QuestionID;references:ID;constraint:OnDelete:CASCADE;"` // 正解とのリレーション
+	Answer   Answer   `gorm:"foreignKey:AnswerID;references:ID;constraint:OnDelete:CASCADE;"`   // 正解とのリレーション
 	Choices  []Choice `gorm:"foreignKey:QuestionID;references:ID;constraint:OnDelete:CASCADE;"` // 選択肢とのリレーション
 }
