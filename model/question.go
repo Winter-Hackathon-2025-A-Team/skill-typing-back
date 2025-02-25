@@ -19,5 +19,9 @@ type Question struct {
 	User     User     `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE;"`     // ユーザーとのリレーション
 	Category Category `gorm:"foreignKey:CategoryID;constraint:OnDelete:CASCADE;"`               // カテゴリとのリレーション
 	Answer   Answer   `gorm:"foreignKey:AnswerID;references:ID;constraint:OnDelete:CASCADE;"` // 正解とのリレーション
-	Choices  []Choice `gorm:"foreignKey:QuestionID;references:ID;constraint:OnDelete:CASCADE;"` // 選択肢とのリレーション
+	// Choices  []Choice `gorm:"foreignKey:QuestionID;references:ID;constraint:OnDelete:CASCADE;"` // 選択肢とのリレーション
+	Choice1 Choice `gorm:"foreignKey:Choice1ID;references:ID"`
+	Choice2 Choice `gorm:"foreignKey:Choice2ID;references:ID"`
+	Choice3 Choice `gorm:"foreignKey:Choice3ID;references:ID"`
+	Choice4 Choice `gorm:"foreignKey:Choice4ID;references:ID"`
 }

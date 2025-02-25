@@ -132,7 +132,7 @@ func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 	var choices []model.Choice
 	for i, choice := range quizData.Choices {
 		choiceModel := model.Choice{
-			QuestionID:  question.ID,
+			// QuestionID:  question.ID,
 			Content:     choice,
 			Description: quizData.Descriptions[i],
 		}
