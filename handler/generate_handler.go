@@ -26,6 +26,7 @@ var validCategories = map[string]bool{
 // AI を使って問題を生成し、データベースに保存
 func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 	categoryName := strings.TrimSpace(c.QueryParam("category"))
+	keyword := strings.TrimSpace(c.QueryParam("keyword"))
 
 	// バリデーション
 	if categoryName == "" {
@@ -63,26 +64,54 @@ func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 	client := openai.NewClient(apiKey)
 
 	// AI へリクエスト
-	prompt := fmt.Sprintf(`
-「%s」に関するクイズを作成してください。
-- 問題のタイトル（短いフレーズ）
-- 問題文
-- 4つの選択肢
-- 各選択肢の解説
-- 正解の選択肢（選択肢の中から1つ）
-- 正解の詳細な解説
+	var prompt string
+	if keyword == "" {
+		prompt = fmt.Sprintf(`
+		「%s」分野の「%s」に関連するクイズを作成してください
+		「%s」に関する知識を問う問題にしてください。
+		- 問題のタイトル（短いフレーズ）
+		- 問題文
+		- 4つの選択肢（用語）
+		- 各選択肢の解説
+		- 正解の選択肢（選択肢の中から1つ）
+		- 正解の詳細な解説
 
-出力形式は下記のjsonの形式でお願いいたします。
+		出力形式は下記のjsonの形式でお願いいたします。
 
-{
-	"title" : "問題のタイトル",
-    "question":"問題文",
-    "choices":["選択肢1","選択肢2","選択肢3","選択肢4"],
-    "descriptions":["選択肢1の解説","選択肢2の解説","選択肢3の解説","選択肢4の解説"],
-	"answer": "正解の選択肢",
-	"explanation": "正解の詳細な解説"
-}
-`, categoryName)
+		{
+			"title" : "問題のタイトル",
+			"question":"問題文",
+			"choices":["選択肢1","選択肢2","選択肢3","選択肢4"],
+			"descriptions":["選択肢1の解説","選択肢2の解説","選択肢3の解説","選択肢4の解説"],
+			"answer": "正解の選択肢",
+			"explanation": "正解の詳細な解説"
+		}
+		`, categoryName, keyword, keyword)
+	} else {
+		prompt = fmt.Sprintf(`
+		「%s」分野に関するクイズを作成してください。
+		
+		以下の形式で出力してください:
+		- 問題のタイトル（短いフレーズ）
+		- 問題文
+		- 4つの選択肢（用語）
+		- 各選択肢の解説
+		- 正解の選択肢（選択肢の中から1つ）
+		- 正解の詳細な解説
+		
+		出力形式は下記のjsonの形式でお願いいたします。
+		
+		{
+			"title" : "問題のタイトル",
+			"question":"問題文",
+			"choices":["選択肢1","選択肢2","選択肢3","選択肢4"],
+			"descriptions":["選択肢1の解説","選択肢2の解説","選択肢3の解説","選択肢4の解説"],
+			"answer": "正解の選択肢",
+			"explanation": "正解の詳細な解説"
+		}
+		`, categoryName)
+	}
+	
 
 	resp, err := client.CreateChatCompletion(
 		context.Background(),
