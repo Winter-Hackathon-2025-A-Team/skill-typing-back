@@ -20,22 +20,23 @@ import (
 // 固定のカテゴリリスト
 var validCategories = map[string]bool{
 	"基本情報技術者":   true,
-	"AWSアソシエイト": true,
+	"AWSアソシエイト":  true,
 }
 
 // AI を使って問題を生成し、データベースに保存
 func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 	categoryName := strings.TrimSpace(c.QueryParam("category"))
+	keyword := strings.TrimSpace(c.QueryParam("keyword"))
 
 	// バリデーション
 	if categoryName == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "カテゴリーを指定してください"})
 	}
 
-	// // 新しいカテゴリーがリストになければ追加
-	// if !validCategories[categoryName] {
-	// 	validCategories[categoryName] = true
-	// }
+	// 新しいカテゴリーがリストになければ追加
+	if !validCategories[categoryName] {
+		validCategories[categoryName] = true
+	}
 
 	// カテゴリーを取得 or 作成
 	var category model.Category
@@ -63,26 +64,54 @@ func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 	client := openai.NewClient(apiKey)
 
 	// AI へリクエスト
-	prompt := fmt.Sprintf(`
-「%s」に関するクイズを作成してください。
-- 問題のタイトル（短いフレーズ）
-- 問題文
-- 4つの選択肢
-- 各選択肢の解説
-- 正解の選択肢（選択肢の中から1つ）
-- 正解の詳細な解説
+	var prompt string
+	if keyword == "" {
+		prompt = fmt.Sprintf(`
+		「%s」分野の「%s」に関連するクイズを作成してください
+		「%s」に関する知識を問う問題にしてください。
+		- 問題のタイトル（短いフレーズ）
+		- 問題文
+		- 4つの選択肢（用語）
+		- 各選択肢の解説
+		- 正解の選択肢（選択肢の中から1つ）
+		- 正解の詳細な解説
 
-出力形式は下記のjsonの形式でお願いいたします。
+		出力形式は下記のjsonの形式でお願いいたします。
 
-{
-	"title" : "問題のタイトル",
-    "question":"問題文",
-    "choices":["選択肢1","選択肢2","選択肢3","選択肢4"],
-    "descriptions":["選択肢1の解説","選択肢2の解説","選択肢3の解説","選択肢4の解説"],
-	"answer": "正解の選択肢",
-	"explanation": "正解の詳細な解説"
-}
-`, categoryName)
+		{
+			"title" : "問題のタイトル",
+			"question":"問題文",
+			"choices":["選択肢1","選択肢2","選択肢3","選択肢4"],
+			"descriptions":["選択肢1の解説","選択肢2の解説","選択肢3の解説","選択肢4の解説"],
+			"answer": "正解の選択肢",
+			"explanation": "正解の詳細な解説"
+		}
+		`, categoryName, keyword, keyword)
+	} else {
+		prompt = fmt.Sprintf(`
+		「%s」分野に関するクイズを作成してください。
+		
+		以下の形式で出力してください:
+		- 問題のタイトル（短いフレーズ）
+		- 問題文
+		- 4つの選択肢（用語）
+		- 各選択肢の解説
+		- 正解の選択肢（選択肢の中から1つ）
+		- 正解の詳細な解説
+		
+		出力形式は下記のjsonの形式でお願いいたします。
+		
+		{
+			"title" : "問題のタイトル",
+			"question":"問題文",
+			"choices":["選択肢1","選択肢2","選択肢3","選択肢4"],
+			"descriptions":["選択肢1の解説","選択肢2の解説","選択肢3の解説","選択肢4の解説"],
+			"answer": "正解の選択肢",
+			"explanation": "正解の詳細な解説"
+		}
+		`, categoryName)
+	}
+	
 
 	resp, err := client.CreateChatCompletion(
 		context.Background(),
@@ -142,12 +171,12 @@ func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"title": quizData.Title,
-		"content": quizData.Content,
-		"category": category.Title,
-		"choices": choices,
+		"title":        quizData.Title,
+		"content":      quizData.Content,
+		"category":     category.Title,
+		"choices":      choices,
 		"answer_index": answerIndex,
-		"explanation": quizData.Explanation,
+		"explanation":  quizData.Explanation,
 	})
 }
 
@@ -155,11 +184,11 @@ func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 func (h *ApiHandler) SaveQuizHandler(c echo.Context) error {
 	// リクエストデータの取得
 	var requestData struct {
-		Title string `json:"title"`
-		Content string `json:"content"`
-		Category string `json:"category"`
-		Choices []struct {
-			Content string `json:"content"`
+		Title       string `json:"title"`
+		Content     string `json:"content"`
+		Category    string `json:"category"`
+		Choices     []struct {
+			Content     string `json:"content"`
 			Description string `json:"description"`
 		} `json:"choices"`
 		AnswerIndex int `json:"answer_index"`
@@ -203,14 +232,30 @@ func (h *ApiHandler) SaveQuizHandler(c echo.Context) error {
 	var answerChoiceID uint
 
 	for i, choice := range requestData.Choices {
-		newChoice := model.Choice{
-			Content: choice.Content,
-			Description: choice.Description,
-		}
+		// 既存の選択肢を検索
+		existingChoice, err := h.repo.GetChoiceByContent(c, choice.Content)
 
-		if err := h.repo.CreateChoice(c, &newChoice); err != nil {
-			log.Println("選択肢の保存エラー:", err)
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "選択肢の保存に失敗しました"})
+		var newChoice model.Choice
+		if err == nil {
+			// 既存の選択肢があれば使用する
+			newChoice = *existingChoice
+			log.Printf("既存の選択肢を利用: ID=%d, Content=%s", newChoice.ID, newChoice.Content)
+		} else if errors.Is(err, gorm.ErrRecordNotFound) {
+			// 見つからなかった場合は新しく作成する
+			newChoice := model.Choice{
+				Content: choice.Content,
+				Description: choice.Description,
+			}
+				
+			if err := h.repo.CreateChoice(c, &newChoice); err != nil {
+				log.Println("選択肢の保存エラー:", err)
+				return c.JSON(http.StatusInternalServerError, map[string]string{"error": "選択肢の保存に失敗しました"})
+			}
+			log.Printf("新しいあたらしい選択肢を作成: ID=%d, Content=%s", newChoice.ID, newChoice.Content)
+		} else {
+			// その他のエラーの場合
+			log.Println("選択肢検索エラー:", err)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "選択肢の検索に失敗しました"})
 		}
 
 		choices = append(choices, newChoice)

@@ -100,6 +100,14 @@ func (m *repositoryMock) GetChoicesByQuestionID(c echo.Context, questionID uint)
 	return args.Get(0).([]model.Choice), args.Error(1)
 }
 
+func (m *repositoryMock) GetChoiceByContent(c echo.Context, content string) (*model.Choice, error) {
+    args := m.Called(c, content)
+    if choice, ok := args.Get(0).(*model.Choice); ok {
+        return choice, args.Error(1)
+    }
+    return nil, args.Error(1)
+}
+
 // ユーザー取得テスト
 func TestGetMeSuccess(t *testing.T) {
 	// Setup

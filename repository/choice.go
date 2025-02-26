@@ -31,3 +31,17 @@ func (r *DbRepository) GetChoiceByContentAndQuestionId(c echo.Context, content s
 
 	return &choice, nil
 }
+
+// 選択肢の内容を確認するためのリポジトリ
+func (r *DbRepository) GetChoiceByContent(c echo.Context, content string) (*model.Choice, error) {
+	var choice model.Choice
+
+	if err := r.db.Where("content = ?", content).First(&choice).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, gorm.ErrRecordNotFound
+		}
+		return nil, fmt.Errorf("failed to get choice by content: %v", err)
+	}
+
+	return &choice, nil 
+}
