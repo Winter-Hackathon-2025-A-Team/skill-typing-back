@@ -74,7 +74,7 @@ func SetupRouter() *echo.Echo {
 	// ユーザー情報取得エンドポイント
 	api.GET("/users/me", apiHandler.GetMe)
 	// 質問の作成エンドポイント
-	api.POST("/questions", apiHandler.CreateQuestion)
+	api.POST("/questions", apiHandler.SaveQuizHandler)
 	// スコアの作成エンドポイント
 	api.POST("/scores", apiHandler.CreateScore)
 	// 最新スコア取得エンドポイント
