@@ -44,6 +44,7 @@ type DbRepositoryInterface interface {
 	GetAllQuestions(c echo.Context) (*[]model.Question, error)
 	GetCategoryByTitle(c echo.Context, title string) (model.Category, error)
 	GetChoiceByContentAndQuestionId(c echo.Context, content string, questionId uint) (*model.Choice, error)
+	GetChoiceByContent(c echo.Context, content string) (*model.Choice, error)
 	GetLatestScore(c echo.Context, userId string) (*model.Score, error)
 	GetQuestion(c echo.Context, id string) (*model.Question, error)
 	GetUser(id string) (*model.User, error)

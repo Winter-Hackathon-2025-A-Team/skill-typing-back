@@ -203,14 +203,30 @@ func (h *ApiHandler) SaveQuizHandler(c echo.Context) error {
 	var answerChoiceID uint
 
 	for i, choice := range requestData.Choices {
-		newChoice := model.Choice{
-			Content: choice.Content,
-			Description: choice.Description,
-		}
+		// 既存の選択肢を検索
+		existingChoice, err := h.repo.GetChoiceByContent(c, choice.Content)
 
-		if err := h.repo.CreateChoice(c, &newChoice); err != nil {
-			log.Println("選択肢の保存エラー:", err)
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "選択肢の保存に失敗しました"})
+		var newChoice model.Choice
+		if err == nil {
+			// 既存の選択肢があれば使用する
+			newChoice = existingChoice
+			log.Printf("既存の選択肢を利用: ID=%d, Content=%s", newChoice.ID, newChoice.Content)
+		} else if errors.Is(err, gorm.ErrRecordNotFound) {
+			// 見つからなかった場合は新しく作成する
+			newChoice := model.Choice{
+				Content: choice.Content,
+				Description: choice.Description,
+			}
+				
+			if err := h.repo.CreateChoice(c, &newChoice); err != nil {
+				log.Println("選択肢の保存エラー:", err)
+				return c.JSON(http.StatusInternalServerError, map[string]string{"error": "選択肢の保存に失敗しました"})
+			}
+			log.Printf("新しいあたらしい選択肢を作成: ID=%d, Content=%s", newChoice.ID, newChoice.Content)
+		} else {
+			// その他のエラーの場合
+			log.Println("選択肢検索エラー:", err)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "選択肢の検索に失敗しました"})
 		}
 
 		choices = append(choices, newChoice)
