@@ -89,9 +89,9 @@ func (m *repositoryMock) GetRandomQuestions(c echo.Context) ([]model.Question, e
 
 }
 
-func (m *repositoryMock) GetQuestionsByCategory(c echo.Context, categoryID uint, limit int) ([]model.Question, error) {
+func (m *repositoryMock) GetQuestionsByCategory(c echo.Context, categoryID uint, limit int) ([]model.Question, map[uint]uint, error) {
 	args := m.Called(categoryID, limit)
-	return args.Get(0).([]model.Question), args.Error(1)
+	return args.Get(0).([]model.Question), args.Get(1).(map[uint]uint), args.Error(2)
 }
 
 func (m *repositoryMock) GetChoicesByQuestionID(c echo.Context, questionID uint) ([]model.Choice, error) {
