@@ -25,13 +25,9 @@ var validCategories = map[string]bool{
 
 // AI を使って問題を生成し、データベースに保存
 func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
-	topic := c.QueryParam("topic")
 	categoryName := strings.TrimSpace(c.QueryParam("category"))
 
 	// バリデーション
-	if topic == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "トピックを指定してください"})
-	}
 	if categoryName == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "カテゴリーを指定してください"})
 	}
@@ -85,7 +81,7 @@ func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 	"answer": "正解の選択肢",
 	"explanation": "正解の詳細な解説"
 }
-`, topic)
+`)
 
 	resp, err := client.CreateChatCompletion(
 		context.Background(),
