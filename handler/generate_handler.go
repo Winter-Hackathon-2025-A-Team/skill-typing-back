@@ -20,7 +20,7 @@ import (
 // 固定のカテゴリリスト
 var validCategories = map[string]bool{
 	"基本情報技術者":   true,
-	"AWSアソシエイト": true,
+	"AWSアソシエイト":  true,
 }
 
 // AI を使って問題を生成し、データベースに保存
@@ -142,12 +142,12 @@ func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"title": quizData.Title,
-		"content": quizData.Content,
-		"category": category.Title,
-		"choices": choices,
+		"title":        quizData.Title,
+		"content":      quizData.Content,
+		"category":     category.Title,
+		"choices":      choices,
 		"answer_index": answerIndex,
-		"explanation": quizData.Explanation,
+		"explanation":  quizData.Explanation,
 	})
 }
 
@@ -155,11 +155,11 @@ func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 func (h *ApiHandler) SaveQuizHandler(c echo.Context) error {
 	// リクエストデータの取得
 	var requestData struct {
-		Title string `json:"title"`
-		Content string `json:"content"`
-		Category string `json:"category"`
-		Choices []struct {
-			Content string `json:"content"`
+		Title       string `json:"title"`
+		Content     string `json:"content"`
+		Category    string `json:"category"`
+		Choices     []struct {
+			Content     string `json:"content"`
 			Description string `json:"description"`
 		} `json:"choices"`
 		AnswerIndex int `json:"answer_index"`
