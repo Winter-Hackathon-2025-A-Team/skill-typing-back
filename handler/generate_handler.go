@@ -32,10 +32,10 @@ func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "カテゴリーを指定してください"})
 	}
 
-	// // 新しいカテゴリーがリストになければ追加
-	// if !validCategories[categoryName] {
-	// 	validCategories[categoryName] = true
-	// }
+	// 新しいカテゴリーがリストになければ追加
+	if !validCategories[categoryName] {
+		validCategories[categoryName] = true
+	}
 
 	// カテゴリーを取得 or 作成
 	var category model.Category
