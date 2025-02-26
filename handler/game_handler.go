@@ -26,8 +26,8 @@ func (h *ApiHandler) getGameQuestions(c echo.Context, limit int) error {
 		categoryID = uint(id)
 	}
 
-	// ✅ 修正: `c` を引数に追加
-	questions, err := h.repo.GetQuestionsByCategory(c, categoryID, limit)
+	// `answerMap` も取得するように修正
+	questions, answerMap, err := h.repo.GetQuestionsByCategory(c, categoryID, limit)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Println("指定されたカテゴリの問題が見つかりません")
@@ -48,6 +48,7 @@ func (h *ApiHandler) getGameQuestions(c echo.Context, limit int) error {
 		ID       uint   `json:"id"`
 		Title    string `json:"title"`
 		Content  string `json:"content"`
+		AnswerID uint   `json:"answer_id"` // ✅ `answers` テーブルから取得
 		Category struct {
 			ID    uint   `json:"id"`
 			Title string `json:"title"`
@@ -76,15 +77,26 @@ func (h *ApiHandler) getGameQuestions(c echo.Context, limit int) error {
 			})
 		}
 
-		// `category` の情報も格納
+		// ✅ `answers` テーブルから `answer_id` を取得
+		answerID := answerMap[question.ID]
+
+		//  `category` の情報を正しく格納
 		q := QuestionResponse{
-			ID:      question.ID,
-			Title:   question.Title,
-			Content: question.Content,
-			Choices: choiceResponses,
+			ID:       question.ID,
+			Title:    question.Title,
+			Content:  question.Content,
+			AnswerID: answerID, //  `answers` テーブルから取得
+			Choices:  choiceResponses,
 		}
-		q.Category.ID = question.Category.ID
-		q.Category.Title = question.Category.Title
+
+		// ✅ カテゴリが 0 でない場合に情報をセット
+		if question.Category.ID != 0 {
+			q.Category.ID = question.Category.ID
+			q.Category.Title = question.Category.Title
+		} else {
+			q.Category.ID = 0
+			q.Category.Title = "未分類" // 例えば「未分類」などのデフォルト値を設定
+		}
 
 		response.Questions = append(response.Questions, q)
 	}
