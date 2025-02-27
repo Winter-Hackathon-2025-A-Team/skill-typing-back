@@ -242,7 +242,7 @@ func (h *ApiHandler) SaveQuizHandler(c echo.Context) error {
 			log.Printf("既存の選択肢を利用: ID=%d, Content=%s", newChoice.ID, newChoice.Content)
 		} else if errors.Is(err, gorm.ErrRecordNotFound) {
 			// 見つからなかった場合は新しく作成する
-			newChoice := model.Choice{
+			newChoice = model.Choice{
 				Content: choice.Content,
 				Description: choice.Description,
 			}
