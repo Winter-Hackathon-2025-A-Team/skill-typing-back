@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// 問題の新規作成
+// 問題の新規作成用ハンドラ
 func (h *ApiHandler) CreateScore(c echo.Context) error {
 
 	// リクエストボディを取得
@@ -46,6 +46,7 @@ func (h *ApiHandler) CreateScore(c echo.Context) error {
 	return c.JSON(http.StatusCreated, success)
 }
 
+// ユーザーの最新スコアを取得するハンドラ
 func (h *ApiHandler) GetLatestScore(c echo.Context) error {
 
 	// 返却値用の構造体

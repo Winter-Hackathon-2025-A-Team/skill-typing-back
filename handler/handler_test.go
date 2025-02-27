@@ -84,11 +84,6 @@ func (m *repositoryMock) UpdateQuestion(c echo.Context, question *model.Question
 	args := m.Called()
 	return args.Error(0)
 }
-func (m *repositoryMock) GetRandomQuestions(c echo.Context) ([]model.Question, error) {
-	args := m.Called()
-	return args.Get(0).([]model.Question), args.Error(1)
-
-}
 
 func (m *repositoryMock) GetQuestionsByCategory(c echo.Context, categoryID uint, limit int) ([]model.Question, map[uint]uint, error) {
 	args := m.Called(categoryID, limit)
@@ -101,11 +96,11 @@ func (m *repositoryMock) GetChoicesByQuestionID(c echo.Context, questionID uint)
 }
 
 func (m *repositoryMock) GetChoiceByContent(c echo.Context, content string) (*model.Choice, error) {
-    args := m.Called(c, content)
-    if choice, ok := args.Get(0).(*model.Choice); ok {
-        return choice, args.Error(1)
-    }
-    return nil, args.Error(1)
+	args := m.Called(c, content)
+	if choice, ok := args.Get(0).(*model.Choice); ok {
+		return choice, args.Error(1)
+	}
+	return nil, args.Error(1)
 }
 
 // ユーザー取得テスト
@@ -182,9 +177,9 @@ func TestGetMeUserFails(t *testing.T) {
 
 	m := new(repositoryMock)
 	m.On("GetUser", userID).Return(
-		(*model.User)(nil), 
+		(*model.User)(nil),
 		errors.New("Database error"),
-		)
+	)
 
 	h := New(m)
 
