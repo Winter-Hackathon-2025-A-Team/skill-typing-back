@@ -70,6 +70,7 @@ func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 		「%s」分野の問題を作成してください。
 		「%s」に関する知識を問う問題にしてください。
 		「%s」が正解の選択肢となるような問題にしてください。
+		出力は日本語で。
 		- 問題のタイトル（短いフレーズ）
 		- 問題文
 		- 4つの選択肢（用語）
@@ -91,7 +92,8 @@ func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 	} else {
 		prompt = fmt.Sprintf(`
 		「%s」分野に関するクイズを作成してください。
-		
+		出力は日本語で。
+
 		以下の形式で出力してください:
 		- 問題のタイトル（短いフレーズ）
 		- 問題文
