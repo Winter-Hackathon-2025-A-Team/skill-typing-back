@@ -64,13 +64,6 @@ func SetupRouter() *echo.Echo {
 	// api配下にのみauthMiddlwareを適用
 	api.Use(authMiddleware)
 
-	// authエンドポイント
-	api.GET("/auth", func(c echo.Context) error {
-		user := c.Get("user").(*auth.CognitoClaims)
-		return c.JSON(http.StatusOK, map[string]string{
-			"sub": user.Sub,
-		})
-	})
 	// ユーザー情報取得エンドポイント
 	api.GET("/users/me", apiHandler.GetMe)
 	// 質問の作成エンドポイント
