@@ -65,10 +65,11 @@ func (h *ApiHandler) GenerateQuizHandler(c echo.Context) error {
 
 	// AI へリクエスト
 	var prompt string
-	if keyword == "" {
+	if keyword != "" {
 		prompt = fmt.Sprintf(`
-		「%s」分野の「%s」に関連するクイズを作成してください
+		「%s」分野の問題を作成してください。
 		「%s」に関する知識を問う問題にしてください。
+		「%s」が正解の選択肢となるような問題にしてください。
 		- 問題のタイトル（短いフレーズ）
 		- 問題文
 		- 4つの選択肢（用語）
